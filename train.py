@@ -12,70 +12,17 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 from model import Model
 from data import GPTDataset, DatasetSampler
-
-VOCAB_SIZE = 50257
-EMBED_DIM = 1024  
-N_LAYERS = 20
-N_HEADS = 16
-N_KV_HEADS = 8
-HIDDEN_DIM = 2048
-MAX_SEQ_LEN = 1024
-
-MICRO_BATCH_SIZE = 16
-ACCUM_STEPS = 4
-
-LR = 3e-4
-MIN_LR = 3e-5
-
-TOKEN_BUDGET = 10_000_000_000
-
-WARMUP_STEPS = 1200
-
-def setup_distributed():
-    dist.init_process_group(backend="nccl")
-    local_rank = int(os.environ["LOCAL_RANK"])
-    torch.cuda.set_device(local_rank)
-    return local_rank
-
-def cleanup_distributed():
-    dist.destroy_process_group()
-
-def is_main_process():
-    return dist.get_rank() == 0
-
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters())
-
-def num_steps(micro_batch_size, max_seq_len, accum_steps, world_size):
-    effective_batch_size = micro_batch_size * accum_steps * world_size
-    total_steps = TOKEN_BUDGET // (effective_batch_size * max_seq_len)
-    return total_steps
-
-def validate(model, val_loader, num_steps=20):
-    model.eval()
-    val_loss = 0.0
-    val_iter = iter(val_loader)
-    with torch.no_grad():
-        for _ in range(num_steps):
-            try:
-                input, target = next(val_iter)
-            except StopIteration:
-                val_iter = iter(val_loader)
-                input, target = next(val_iter)
-            input = input.to(model.device)
-            target = target.to(model.device)
-            out, loss = model(input, target)
-            val_loss += loss.item()
-    
-    avg_val_loss = val_loss / num_steps
-    return avg_val_loss
+from train_utils import *
+from dist_utils import *
+from config import *
 
 
-def train(model, optimizer, train_loader, val_loader, local_rank, world_size):
+
+def train(model, optimizer, train_loader, val_loader, local_rank, world_size, model_cfg: ModelConfig, train_cfg: TrainConfig):
     model.train()
-    total_steps = num_steps(MICRO_BATCH_SIZE, MAX_SEQ_LEN, ACCUM_STEPS, world_size)
-    effective_batch_size = MICRO_BATCH_SIZE * ACCUM_STEPS * world_size
-    tokens_per_step = effective_batch_size * MAX_SEQ_LEN
+    total_steps = num_steps(train_cfg, model_cfg, world_size)
+    effective_batch_size = train_cfg.micro_batch_size * train_cfg.accum_steps * world_size
+    tokens_per_step = effective_batch_size * model_cfg.max_seq_len
     
     if is_main_process():
         print(f"training for {total_steps:,} steps")
@@ -95,7 +42,7 @@ def train(model, optimizer, train_loader, val_loader, local_rank, world_size):
         accum_loss = 0.0
         
         # gradient accumulation loop
-        for micro_step in range(ACCUM_STEPS):
+        for micro_step in range(train_cfg.accum_steps):
             try:
                 input, target = next(train_iter)
             except StopIteration:
@@ -107,41 +54,41 @@ def train(model, optimizer, train_loader, val_loader, local_rank, world_size):
             target = target.to(local_rank)
             
             # disable gradient sync for all but the last micro step
-            if micro_step < ACCUM_STEPS - 1:
+            if micro_step < train_cfg.accum_steps - 1:
                 with model.no_sync():
                     out, loss = model(input, target)
-                    scaled_loss = loss / ACCUM_STEPS
+                    scaled_loss = loss / train_cfg.accum_steps
                     scaled_loss.backward()
             else:
                 out, loss = model(input, target)
-                scaled_loss = loss / ACCUM_STEPS
+                scaled_loss = loss / train_cfg.accum_steps
                 scaled_loss.backward()
             
             accum_loss += loss.item()
         
         # average loss over accumulation steps
-        avg_loss = accum_loss / ACCUM_STEPS
+        avg_loss = accum_loss / train_cfg.accum_steps
         
         step += 1
         
         # learning rate schedule
-        if step < WARMUP_STEPS:
-            coeff = step / WARMUP_STEPS
+        if step < train_cfg.warmup_steps:
+            coeff = step / train_cfg.warmup_steps
             for param_group in optimizer.param_groups:
-                param_group['lr'] = coeff * LR
+                param_group['lr'] = coeff * train_cfg.lr
         else:
-            coeff = 0.5 * (1.0 + math.cos(math.pi * ((step - WARMUP_STEPS) / (total_steps - WARMUP_STEPS))))
+            coeff = 0.5 * (1.0 + math.cos(math.pi * ((step - train_cfg.warmup_steps) / (total_steps - train_cfg.warmup_steps))))
             for param_group in optimizer.param_groups:
-                param_group['lr'] = MIN_LR + coeff * (LR - MIN_LR)
+                param_group['lr'] = train_cfg.min_lr + coeff * (train_cfg.lr - train_cfg.min_lr)
 
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=train_cfg.max_grad_norm)
         optimizer.step()
         
         if step == 1 and is_main_process():
             print(f"first step completed, loss: {avg_loss:.4f}", flush=True)
 
         if step % 100 == 0 and is_main_process():
-            val_loss = validate(model, val_loader, num_steps=20)
+            val_loss = validate(model, val_loader, val_steps=20)
             current_time = time.time()
             elapsed = current_time - last_log_time
             steps_since_last_log = step - last_log_step if step > 0 else 1
@@ -154,6 +101,10 @@ def train(model, optimizer, train_loader, val_loader, local_rank, world_size):
 
 
 def main():
+    # configs
+    model_cfg = ModelConfig()
+    train_cfg = TrainConfig()
+    
     # setup distributed training
     local_rank = setup_distributed()
     world_size = dist.get_world_size()
@@ -162,17 +113,17 @@ def main():
         print(f"running on {world_size} GPUs")
     
     # datasets
-    train_dataset = GPTDataset(filename="train.bin", max_seq_len=MAX_SEQ_LEN)
-    test_dataset  = GPTDataset(filename="val.bin", max_seq_len=MAX_SEQ_LEN)
+    train_dataset = GPTDataset(filename="train.bin", max_seq_len=model_cfg.max_seq_len)
+    test_dataset  = GPTDataset(filename="val.bin", max_seq_len=model_cfg.max_seq_len)
 
-    train_sampler = DatasetSampler(len(train_dataset), MICRO_BATCH_SIZE, dist.get_rank(), world_size, shuffle=True)
-    val_sampler = DatasetSampler(len(test_dataset), MICRO_BATCH_SIZE, dist.get_rank(), world_size, shuffle=False)
+    train_sampler = DatasetSampler(len(train_dataset), train_cfg.micro_batch_size, dist.get_rank(), world_size, shuffle=True)
+    val_sampler = DatasetSampler(len(test_dataset), train_cfg.micro_batch_size, dist.get_rank(), world_size, shuffle=False)
     
-    train_loader = DataLoader(train_dataset, batch_size=MICRO_BATCH_SIZE, sampler=train_sampler, num_workers=4, pin_memory=True)
-    val_loader   = DataLoader(test_dataset, batch_size=MICRO_BATCH_SIZE, sampler=val_sampler, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=train_cfg.micro_batch_size, sampler=train_sampler, num_workers=4, pin_memory=True)
+    val_loader   = DataLoader(test_dataset, batch_size=train_cfg.micro_batch_size, sampler=val_sampler, num_workers=4, pin_memory=True)
     
     # model on specific GPU
-    model = Model(VOCAB_SIZE, EMBED_DIM, N_LAYERS, N_HEADS, N_KV_HEADS, HIDDEN_DIM, MAX_SEQ_LEN).to(local_rank)
+    model = Model(model_cfg.vocab_size, model_cfg.embed_dim, model_cfg.n_layers, model_cfg.n_heads, model_cfg.n_kv_heads, model_cfg.hidden_dim, model_cfg.max_seq_len).to(local_rank)
     model.device = local_rank
 
     # print total number of parameters
@@ -187,10 +138,10 @@ def main():
     dist.barrier()
     
     # optimizer
-    optimizer = torch.optim.AdamW(model.parameters(), lr=LR, weight_decay=0.1)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=train_cfg.lr, weight_decay=train_cfg.weight_decay)
     
     # train
-    train(model, optimizer, train_loader, val_loader, local_rank, world_size)
+    train(model, optimizer, train_loader, val_loader, local_rank, world_size, model_cfg, train_cfg)
     
     # save model (only on main process)
     if is_main_process():
