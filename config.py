@@ -18,6 +18,25 @@ class TrainConfig:
     lr = 3e-4
     min_lr = 3e-5
     token_budget = 10_000_000_000
-    warmup_steps = 1200
+    warmrup_ratio = 0.1
     weight_decay = 0.1
     max_grad_norm = 1.0
+
+@dataclass
+class SFTConfig:
+    micro_batch_size = 8
+    accum_steps = 4 
+    num_epochs = 3
+    lr = 2e-3 
+    min_lr = 2e-6
+    warmup_ratio = 0.1
+    mask_prompt = True
+
+@dataclass
+class Paths:
+    pretrained_path = "apollo_pretrained.pt"
+    pretrain_train_data_path = "train.bin"
+    pretrain_val_dataa_path = "val.bin"
+    sft_path = "apollo_sft.pt"
+    sft_data_path = "alpaca.json"
+

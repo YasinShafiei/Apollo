@@ -17,16 +17,17 @@ from dist_utils import *
 from config import *
 
 
-
-def train(model, optimizer, train_loader, val_loader, local_rank, world_size, model_cfg: ModelConfig, train_cfg: TrainConfig):
+def train(model, optimizer, train_loader, val_loader, local_rank, world_size, model_cfg, train_cfg):
     model.train()
     total_steps = num_steps(train_cfg, model_cfg, world_size)
     effective_batch_size = train_cfg.micro_batch_size * train_cfg.accum_steps * world_size
     tokens_per_step = effective_batch_size * model_cfg.max_seq_len
+    warmup_steps = int(train_cfg.warmrup_ratio * total_steps)
     
     if is_main_process():
         print(f"training for {total_steps:,} steps")
         print(f"effective batch size: {effective_batch_size}")
+        print(f"warmup steps: {warmup_steps}")
         print(f"tokens per step: {tokens_per_step:,}")
     
     step = 0
@@ -72,8 +73,8 @@ def train(model, optimizer, train_loader, val_loader, local_rank, world_size, mo
         step += 1
         
         # learning rate schedule
-        if step < train_cfg.warmup_steps:
-            coeff = step / train_cfg.warmup_steps
+        if step < warmup_steps:
+            coeff = step / warmup_steps
             for param_group in optimizer.param_groups:
                 param_group['lr'] = coeff * train_cfg.lr
         else:
