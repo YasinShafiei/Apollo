@@ -126,7 +126,7 @@ def main():
     # model on specific GPU
     model = Model(model_cfg.vocab_size, model_cfg.embed_dim, model_cfg.n_layers, model_cfg.n_heads, model_cfg.n_kv_heads, model_cfg.hidden_dim, model_cfg.max_seq_len).to(local_rank)
     model.device = local_rank
-    model = torch.compile(model, mode="default")
+    model = torch.compile(model, mode="reduce-overhead")
 
     # print total number of parameters
     if is_main_process():
