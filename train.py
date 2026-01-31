@@ -126,6 +126,7 @@ def main():
     # model on specific GPU
     model = Model(model_cfg.vocab_size, model_cfg.embed_dim, model_cfg.n_layers, model_cfg.n_heads, model_cfg.n_kv_heads, model_cfg.hidden_dim, model_cfg.max_seq_len).to(local_rank)
     model.device = local_rank
+    model = torch.compile(model, mode="default")
 
     # print total number of parameters
     if is_main_process():
@@ -139,7 +140,7 @@ def main():
     dist.barrier()
     
     # optimizer
-    optimizer = torch.optim.AdamW(model.parameters(), lr=train_cfg.lr, weight_decay=train_cfg.weight_decay)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=train_cfg.lr, weight_decay=train_cfg.weight_decay, fused=True)
     
     # train
     train(model, optimizer, train_loader, val_loader, local_rank, world_size, model_cfg, train_cfg)
