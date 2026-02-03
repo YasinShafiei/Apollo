@@ -13,8 +13,8 @@ class ModelConfig:
 
 @dataclass
 class TrainConfig:
-    micro_batch_size = 16
-    accum_steps = 4
+    micro_batch_size = 24
+    accum_steps = 8
     lr = 3e-4
     min_lr = 3e-5
     token_budget = 10_000_000_000
@@ -34,9 +34,9 @@ class SFTConfig:
 
 @dataclass
 class Paths:
-    pretrained_path = "apollo_pretrained.pt"
-    pretrain_train_data_path = "train.bin"
-    pretrain_val_dataa_path = "val.bin"
+    pretrained_path = "models/apollo_pretrained.pt"
+    pretrain_train_data_path = "data/train.bin"
+    pretrain_val_data_path = "data/val.bin"
     sft_path = "apollo_sft.pt"
     sft_data_path = "alpaca.json"
 

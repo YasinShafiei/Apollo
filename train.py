@@ -105,6 +105,7 @@ def main():
     # configs
     model_cfg = ModelConfig()
     train_cfg = TrainConfig()
+    paths_cfg = Paths()
     
     # setup distributed training
     local_rank = setup_distributed()
@@ -114,8 +115,8 @@ def main():
         print(f"running on {world_size} GPUs")
     
     # datasets
-    train_dataset = GPTDataset(filename="train.bin", max_seq_len=model_cfg.max_seq_len)
-    test_dataset  = GPTDataset(filename="val.bin", max_seq_len=model_cfg.max_seq_len)
+    train_dataset = GPTDataset(filename=paths_cfg.pretrain_train_data_path, max_seq_len=model_cfg.max_seq_len)
+    test_dataset  = GPTDataset(filename=paths_cfg.pretrain_val_data_path, max_seq_len=model_cfg.max_seq_len)
 
     train_sampler = DatasetSampler(len(train_dataset), train_cfg.micro_batch_size, dist.get_rank(), world_size, shuffle=True)
     val_sampler = DatasetSampler(len(test_dataset), train_cfg.micro_batch_size, dist.get_rank(), world_size, shuffle=False)
@@ -126,7 +127,7 @@ def main():
     # model on specific GPU
     model = Model(model_cfg.vocab_size, model_cfg.embed_dim, model_cfg.n_layers, model_cfg.n_heads, model_cfg.n_kv_heads, model_cfg.hidden_dim, model_cfg.max_seq_len).to(local_rank)
     model.device = local_rank
-    model = torch.compile(model, mode="reduce-overhead")
+    model = torch.compile(model, mode="default")
 
     # print total number of parameters
     if is_main_process():
@@ -147,8 +148,8 @@ def main():
     
     # save model (only on main process)
     if is_main_process():
-        torch.save(model.module.state_dict(), "model.pt")
-        print("Model saved to model.pt")
+        torch.save(model.module.state_dict(), paths_cfg.pretrained_path)
+        print("Model saved")
     
     cleanup_distributed()
 
