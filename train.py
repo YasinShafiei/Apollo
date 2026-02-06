@@ -89,7 +89,7 @@ def train(model, optimizer, train_loader, val_loader, local_rank, world_size, mo
             print(f"first step completed, loss: {avg_loss:.4f}", flush=True)
 
         if step % 100 == 0 and is_main_process():
-            val_loss = validate(model, val_loader, val_steps=20)
+            val_loss = validate(model, val_loader, val_steps=50, local_rank=local_rank, sft=False)
             current_time = time.time()
             elapsed = current_time - last_log_time
             steps_since_last_log = step - last_log_step if step > 0 else 1

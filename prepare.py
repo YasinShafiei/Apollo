@@ -16,7 +16,7 @@ NUM_PROC = max(1, os.cpu_count() // 2)
 BATCH_SIZE_MAP = 1000
 WRITE_CHUNK_DOCS = 2048
 STREAMING = False
-OUT_DIR = "."
+OUT_DIR = "data"
 HF_SPLIT = None
 
 _enc = tiktoken.get_encoding("gpt2")
@@ -148,6 +148,8 @@ def prepare_streaming():
 
 
 if __name__ == "__main__":
+    os.makedirs(OUT_DIR, exist_ok=True)
+    os.makedirs("models", exist_ok=True)
     if STREAMING:
         prepare_streaming()
     else:

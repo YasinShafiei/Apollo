@@ -40,6 +40,7 @@ def validate(model, val_loader, local_rank, val_steps=20, sft=False):
                 batch = next(val_iter)
             except StopIteration:
                 val_iter = iter(val_loader)
+                batch = next(val_iter)
 
             if sft:
                 input_ids, target_ids, loss_mask = batch 
@@ -57,6 +58,7 @@ def validate(model, val_loader, local_rank, val_steps=20, sft=False):
                 target_ids = target_ids.to(local_rank)
 
                 logits, loss = model(input_ids)
+                val_loss += loss.item()
 
     return val_loss / val_steps
 
