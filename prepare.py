@@ -3,6 +3,25 @@ import math
 import hashlib
 from typing import Dict, List
 
+# Check for filelock compatibility issue before importing huggingface libraries
+def _check_dependencies():
+    try:
+        import filelock
+        # Check if filelock supports the 'mode' parameter (added in filelock >= 3.4.1)
+        import inspect
+        sig = inspect.signature(filelock.FileLock.__init__)
+        if 'mode' not in sig.parameters:
+            print("ERROR: Your 'filelock' package is too old and incompatible with huggingface_hub.")
+            print("Please upgrade it by running:")
+            print("  pip install --upgrade filelock")
+            print("Or if using system packages:")
+            print("  pip install --user --upgrade filelock")
+            exit(1)
+    except ImportError:
+        pass  # filelock not installed, let later imports handle it
+
+_check_dependencies()
+
 import numpy as np
 import tiktoken
 from tqdm import tqdm
