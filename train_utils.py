@@ -1,6 +1,7 @@
 import torch.nn.functional as F 
 from config import *
 import torch
+from torch.amp import autocast
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters())
@@ -48,7 +49,8 @@ def validate(model, val_loader, local_rank, val_steps=20, sft=False):
                 target_ids = target_ids.to(local_rank)
                 loss_mask = loss_mask.to(local_rank)
 
-                logits, _ = model(input_ids)
+                with autocast(device_type='cuda', dtype=torch.bfloat16):
+                    logits, _ = model(input_ids)
                 loss = masked_loss(logits, target_ids, loss_mask)
                 val_loss += loss.item()
             
@@ -57,7 +59,8 @@ def validate(model, val_loader, local_rank, val_steps=20, sft=False):
                 input_ids = input_ids.to(local_rank)
                 target_ids = target_ids.to(local_rank)
 
-                logits, loss = model(input_ids)
+                with autocast(device_type='cuda', dtype=torch.bfloat16):
+                    logits, loss = model(input_ids)
                 val_loss += loss.item()
 
     return val_loss / val_steps

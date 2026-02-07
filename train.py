@@ -6,6 +6,7 @@ import time
 import torch 
 import torch.nn.functional as F
 import torch.distributed as dist
+from torch.amp import autocast
 from torch.utils.data import DataLoader, Subset
 from torch.utils.data.distributed import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
@@ -57,11 +58,13 @@ def train(model, optimizer, train_loader, val_loader, local_rank, world_size, mo
             # disable gradient sync for all but the last micro step
             if micro_step < train_cfg.accum_steps - 1:
                 with model.no_sync():
-                    out, loss = model(input, target)
+                    with autocast(device_type='cuda', dtype=torch.bfloat16):
+                        out, loss = model(input, target)
                     scaled_loss = loss / train_cfg.accum_steps
                     scaled_loss.backward()
             else:
-                out, loss = model(input, target)
+                with autocast(device_type='cuda', dtype=torch.bfloat16):
+                    out, loss = model(input, target)
                 scaled_loss = loss / train_cfg.accum_steps
                 scaled_loss.backward()
             
@@ -124,8 +127,8 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=train_cfg.micro_batch_size, sampler=train_sampler, num_workers=4, pin_memory=True)
     val_loader   = DataLoader(test_dataset, batch_size=train_cfg.micro_batch_size, sampler=val_sampler, num_workers=4, pin_memory=True)
     
-    # model on specific GPU
-    model = Model(model_cfg.vocab_size, model_cfg.embed_dim, model_cfg.n_layers, model_cfg.n_heads, model_cfg.n_kv_heads, model_cfg.hidden_dim, model_cfg.max_seq_len).to(local_rank)
+    # model on specific GPU with BF16
+    model = Model(model_cfg.vocab_size, model_cfg.embed_dim, model_cfg.n_layers, model_cfg.n_heads, model_cfg.n_kv_heads, model_cfg.hidden_dim, model_cfg.max_seq_len).to(local_rank, dtype=torch.bfloat16)
     model.device = local_rank
     model = torch.compile(model, mode="default")
 
