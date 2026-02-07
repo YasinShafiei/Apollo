@@ -61,7 +61,8 @@ def validate(model, val_loader, local_rank, val_steps=20, sft=False):
 
                 with autocast(device_type='cuda', dtype=torch.bfloat16):
                     logits, _ = model(input_ids)
-                    loss = F.cross_entropy(logits.view(-1, logits.size(-1)), target_ids.view(-1))
+                
+                loss = F.cross_entropy(logits.float().view(-1, logits.size(-1)), target_ids.view(-1))
                 val_loss += loss.item()
 
     return val_loss / val_steps

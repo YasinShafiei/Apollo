@@ -81,7 +81,7 @@ def train(model, optimizer, train_loader, val_loader, local_rank, world_size, mo
             for param_group in optimizer.param_groups:
                 param_group['lr'] = coeff * train_cfg.lr
         else:
-            coeff = 0.5 * (1.0 + math.cos(math.pi * ((step - train_cfg.warmup_steps) / (total_steps - train_cfg.warmup_steps))))
+            coeff = 0.5 * (1.0 + math.cos(math.pi * ((step - warmup_steps) / (total_steps - warmup_steps))))
             for param_group in optimizer.param_groups:
                 param_group['lr'] = train_cfg.min_lr + coeff * (train_cfg.lr - train_cfg.min_lr)
 
@@ -128,7 +128,7 @@ def main():
     val_loader   = DataLoader(test_dataset, batch_size=train_cfg.micro_batch_size, sampler=val_sampler, num_workers=4, pin_memory=True)
     
     # model on specific GPU with BF16
-    model = Model(model_cfg.vocab_size, model_cfg.embed_dim, model_cfg.n_layers, model_cfg.n_heads, model_cfg.n_kv_heads, model_cfg.hidden_dim, model_cfg.max_seq_len).to(local_rank, dtype=torch.bfloat16)
+    model = Model(model_cfg.vocab_size, model_cfg.embed_dim, model_cfg.n_layers, model_cfg.n_heads, model_cfg.n_kv_heads, model_cfg.hidden_dim, model_cfg.max_seq_len).to(local_rank)
     model.device = local_rank
     model = torch.compile(model, mode="default")
 

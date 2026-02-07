@@ -2,9 +2,10 @@ from dataclasses import dataclass
 
 @dataclass
 class ModelConfig:
+    # 367m config 
     vocab_size = 50257
     embed_dim = 1024
-    n_layers = 20
+    n_layers = 28
     n_heads = 16
     n_kv_heads = 8
     hidden_dim = 2048
@@ -14,10 +15,10 @@ class ModelConfig:
 @dataclass
 class TrainConfig:
     micro_batch_size = 24
-    accum_steps = 8
+    accum_steps = 12
     lr = 3e-4
     min_lr = 3e-5
-    token_budget = 10_000_000_000
+    token_budget = 24_000_000_000
     warmrup_ratio = 0.1
     weight_decay = 0.1
     max_grad_norm = 1.0
