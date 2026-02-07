@@ -91,18 +91,18 @@ def train(model, optimizer, train_loader, val_loader, local_rank, world_size, mo
         if step == 1 and is_main_process():
             print(f"first step completed, loss: {avg_loss:.4f}", flush=True)
 
-        if step % 100 == 0 and is_main_process():
+        if step % 100 == 0:
             val_loss = validate(model, val_loader, val_steps=50, local_rank=local_rank, sft=False)
-            current_time = time.time()
-            elapsed = current_time - last_log_time
-            steps_since_last_log = step - last_log_step if step > 0 else 1
-            tokens_per_sec = (steps_since_last_log * tokens_per_step) / elapsed if elapsed > 0 else 0
-            current_lr = optimizer.param_groups[0]['lr']
-            print(f"Step {step}, Train Loss: {avg_loss:.4f}, Val Loss: {val_loss:.4f}, LR: {current_lr:.6f}, Tokens/s: {tokens_per_sec:,.0f}")
-            last_log_time = current_time
-            last_log_step = step
+            if is_main_process():
+                current_time = time.time()
+                elapsed = current_time - last_log_time
+                steps_since_last_log = step - last_log_step if step > 0 else 1
+                tokens_per_sec = (steps_since_last_log * tokens_per_step) / elapsed if elapsed > 0 else 0
+                current_lr = optimizer.param_groups[0]['lr']
+                print(f"Step {step}, Train Loss: {avg_loss:.4f}, Val Loss: {val_loss:.4f}, LR: {current_lr:.6f}, Tokens/s: {tokens_per_sec:,.0f}")
+                last_log_time = current_time
+                last_log_step = step
             model.train()
-
 
 def main():
     # configs
