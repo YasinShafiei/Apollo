@@ -1,0 +1,173 @@
+root@2c4c2c0520a4:/workspace/Apollo# torchrun --nproc_per_node=8 train.py 
+W0216 13:40:17.960000 129346741154432 torch/distributed/run.py:779] 
+W0216 13:40:17.960000 129346741154432 torch/distributed/run.py:779] *****************************************
+W0216 13:40:17.960000 129346741154432 torch/distributed/run.py:779] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0216 13:40:17.960000 129346741154432 torch/distributed/run.py:779] *****************************************
+running on 8 GPUs
+total parameters: 367,419,473
+training for 12,715 steps
+effective batch size: 2304
+warmup steps: 1271
+tokens per step: 2,359,296
+starting training loop
+[rank0]:W0216 13:40:38.375000 139594283303552 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] xindex is not in var_ranges, defaulting to unknown range.
+[rank5]:W0216 13:40:38.375000 126200476922496 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] xindex is not in var_ranges, defaulting to unknown range.
+[rank3]:W0216 13:40:38.375000 132083156185728 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] xindex is not in var_ranges, defaulting to unknown range.
+[rank7]:W0216 13:40:38.379000 130218796221056 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] xindex is not in var_ranges, defaulting to unknown range.
+[rank1]:W0216 13:40:38.382000 133778503479936 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] xindex is not in var_ranges, defaulting to unknown range.
+[rank4]:W0216 13:40:38.383000 140120655450752 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] xindex is not in var_ranges, defaulting to unknown range.
+[rank6]:W0216 13:40:38.388000 127957761524352 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] xindex is not in var_ranges, defaulting to unknown range.
+[rank2]:W0216 13:40:38.390000 123197473124992 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] xindex is not in var_ranges, defaulting to unknown range.
+first step completed, loss: 11.0041
+[rank0]:W0216 13:45:22.222000 139594283303552 torch/fx/experimental/symbolic_shapes.py:4449] [0/1] xindex is not in var_ranges, defaulting to unknown range.
+[rank6]:W0216 13:45:22.242000 127957761524352 torch/fx/experimental/symbolic_shapes.py:4449] [0/1] xindex is not in var_ranges, defaulting to unknown range.
+[rank7]:W0216 13:45:22.273000 130218796221056 torch/fx/experimental/symbolic_shapes.py:4449] [0/1] xindex is not in var_ranges, defaulting to unknown range.
+[rank1]:W0216 13:45:22.281000 133778503479936 torch/fx/experimental/symbolic_shapes.py:4449] [0/1] xindex is not in var_ranges, defaulting to unknown range.
+[rank4]:W0216 13:45:22.284000 140120655450752 torch/fx/experimental/symbolic_shapes.py:4449] [0/1] xindex is not in var_ranges, defaulting to unknown range.
+[rank5]:W0216 13:45:22.812000 126200476922496 torch/fx/experimental/symbolic_shapes.py:4449] [0/1] xindex is not in var_ranges, defaulting to unknown range.
+[rank3]:W0216 13:45:22.845000 132083156185728 torch/fx/experimental/symbolic_shapes.py:4449] [0/1] xindex is not in var_ranges, defaulting to unknown range.
+[rank2]:W0216 13:45:22.851000 123197473124992 torch/fx/experimental/symbolic_shapes.py:4449] [0/1] xindex is not in var_ranges, defaulting to unknown range.
+Step 100, Train Loss: 7.8632, Val Loss: 7.6824, LR: 0.000024, Tokens/s: 740,941
+Step 200, Train Loss: 6.4906, Val Loss: 6.2596, LR: 0.000047, Tokens/s: 1,087,616
+Step 300, Train Loss: 5.8360, Val Loss: 5.7453, LR: 0.000071, Tokens/s: 1,087,322
+Step 400, Train Loss: 5.5008, Val Loss: 5.3886, LR: 0.000094, Tokens/s: 1,076,162
+Step 500, Train Loss: 5.2057, Val Loss: 5.1213, LR: 0.000118, Tokens/s: 1,082,732
+Step 600, Train Loss: 4.9777, Val Loss: 4.8961, LR: 0.000142, Tokens/s: 1,085,981
+Step 700, Train Loss: 4.7850, Val Loss: 4.7439, LR: 0.000165, Tokens/s: 1,086,772
+Step 800, Train Loss: 4.7197, Val Loss: 4.6638, LR: 0.000189, Tokens/s: 1,079,402
+Step 900, Train Loss: 4.5021, Val Loss: 4.4256, LR: 0.000212, Tokens/s: 1,079,990
+Step 1000, Train Loss: 4.3456, Val Loss: 4.2975, LR: 0.000236, Tokens/s: 1,086,503
+Step 1100, Train Loss: 4.9261, Val Loss: 4.6939, LR: 0.000260, Tokens/s: 1,086,612
+Step 1200, Train Loss: 4.2135, Val Loss: 4.1303, LR: 0.000283, Tokens/s: 1,079,443
+Step 1300, Train Loss: 4.0141, Val Loss: 4.0090, LR: 0.000300, Tokens/s: 1,080,002
+Step 1400, Train Loss: 3.9262, Val Loss: 3.9273, LR: 0.000300, Tokens/s: 1,086,646
+Step 1500, Train Loss: 3.7947, Val Loss: 3.8521, LR: 0.000300, Tokens/s: 1,086,495
+Step 1600, Train Loss: 3.8130, Val Loss: 3.8106, LR: 0.000299, Tokens/s: 1,075,903
+Step 1700, Train Loss: 3.7432, Val Loss: 3.7432, LR: 0.000299, Tokens/s: 1,079,501
+[rank5]:W0216 14:45:20.865000 126200476922496 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank3]:W0216 14:45:21.497000 132083156185728 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank4]:W0216 14:45:21.546000 140120655450752 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank2]:W0216 14:45:21.556000 123197473124992 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank6]:W0216 14:45:21.563000 127957761524352 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank0]:W0216 14:45:21.564000 139594283303552 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank7]:W0216 14:45:21.608000 130218796221056 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank1]:W0216 14:45:21.639000 133778503479936 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank5]:W0216 14:45:22.005000 126200476922496 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank3]:W0216 14:45:22.610000 132083156185728 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank0]:W0216 14:45:22.689000 139594283303552 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank6]:W0216 14:45:22.690000 127957761524352 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank4]:W0216 14:45:22.691000 140120655450752 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank2]:W0216 14:45:22.697000 123197473124992 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank7]:W0216 14:45:22.734000 130218796221056 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+[rank1]:W0216 14:45:22.775000 133778503479936 torch/fx/experimental/symbolic_shapes.py:4449] [0/2] xindex is not in var_ranges, defaulting to unknown range.
+Step 1800, Train Loss: 3.7226, Val Loss: 3.7120, LR: 0.000299, Tokens/s: 752,032
+Step 1900, Train Loss: 3.6574, Val Loss: 3.6691, LR: 0.000298, Tokens/s: 1,111,091
+Step 2000, Train Loss: 3.6081, Val Loss: 3.6481, LR: 0.000297, Tokens/s: 1,118,046
+Step 2100, Train Loss: 3.5819, Val Loss: 3.5959, LR: 0.000297, Tokens/s: 1,117,875
+Step 2200, Train Loss: 3.5613, Val Loss: 3.5932, LR: 0.000296, Tokens/s: 1,117,668
+Step 2300, Train Loss: 3.5160, Val Loss: 3.5676, LR: 0.000295, Tokens/s: 1,080,217
+Step 2400, Train Loss: 3.5380, Val Loss: 3.5361, LR: 0.000294, Tokens/s: 1,111,944
+Step 2500, Train Loss: 3.4912, Val Loss: 3.5233, LR: 0.000292, Tokens/s: 1,117,607
+Step 2600, Train Loss: 3.4719, Val Loss: 3.5050, LR: 0.000291, Tokens/s: 1,112,110
+Step 2700, Train Loss: 3.3938, Val Loss: 3.4829, LR: 0.000290, Tokens/s: 1,117,720
+Step 2800, Train Loss: 3.4417, Val Loss: 3.4833, LR: 0.000288, Tokens/s: 1,117,817
+Step 2900, Train Loss: 3.6728, Val Loss: 3.6482, LR: 0.000287, Tokens/s: 1,100,271
+Step 3000, Train Loss: 3.4507, Val Loss: 3.5108, LR: 0.000285, Tokens/s: 1,093,006
+Step 3100, Train Loss: 3.4223, Val Loss: 3.4624, LR: 0.000283, Tokens/s: 1,117,817
+Step 3200, Train Loss: 3.4098, Val Loss: 3.4370, LR: 0.000282, Tokens/s: 1,112,117
+Step 3300, Train Loss: 3.3620, Val Loss: 3.4304, LR: 0.000280, Tokens/s: 1,117,824
+Step 3400, Train Loss: 3.3380, Val Loss: 3.4192, LR: 0.000278, Tokens/s: 1,117,646
+Step 3500, Train Loss: 3.3481, Val Loss: 3.4032, LR: 0.000276, Tokens/s: 1,110,586
+Step 3600, Train Loss: 3.3339, Val Loss: 3.3889, LR: 0.000273, Tokens/s: 1,081,792
+Step 3700, Train Loss: 3.3852, Val Loss: 3.3782, LR: 0.000271, Tokens/s: 1,117,714
+Step 3800, Train Loss: 3.3244, Val Loss: 3.3605, LR: 0.000269, Tokens/s: 1,112,154
+Step 3900, Train Loss: 3.3007, Val Loss: 3.3589, LR: 0.000266, Tokens/s: 1,116,062
+Step 4000, Train Loss: 3.3048, Val Loss: 3.3498, LR: 0.000264, Tokens/s: 1,117,175
+Step 4100, Train Loss: 3.3217, Val Loss: 3.3495, LR: 0.000261, Tokens/s: 1,117,203
+Step 4200, Train Loss: 3.2875, Val Loss: 3.3370, LR: 0.000259, Tokens/s: 1,083,287
+Step 4300, Train Loss: 3.2368, Val Loss: 3.3220, LR: 0.000256, Tokens/s: 1,111,564
+Step 4400, Train Loss: 3.2657, Val Loss: 3.3074, LR: 0.000253, Tokens/s: 1,117,951
+Step 4500, Train Loss: 3.2715, Val Loss: 3.3058, LR: 0.000250, Tokens/s: 1,111,925
+Step 4600, Train Loss: 3.2490, Val Loss: 3.2959, LR: 0.000247, Tokens/s: 1,117,662
+Step 4700, Train Loss: 3.2751, Val Loss: 3.2801, LR: 0.000244, Tokens/s: 1,117,684
+Step 4800, Train Loss: 3.2074, Val Loss: 3.2921, LR: 0.000241, Tokens/s: 1,094,914
+Step 4900, Train Loss: 3.2264, Val Loss: 3.2795, LR: 0.000238, Tokens/s: 1,100,377
+Step 5000, Train Loss: 3.2152, Val Loss: 3.2779, LR: 0.000235, Tokens/s: 1,117,735
+Step 5100, Train Loss: 3.2071, Val Loss: 3.2832, LR: 0.000232, Tokens/s: 1,111,868
+Step 5200, Train Loss: 3.1953, Val Loss: 3.2765, LR: 0.000229, Tokens/s: 1,117,806
+Step 5300, Train Loss: 3.1858, Val Loss: 3.2634, LR: 0.000226, Tokens/s: 1,117,200
+Step 5400, Train Loss: 3.1814, Val Loss: 3.2584, LR: 0.000222, Tokens/s: 1,111,836
+Step 5500, Train Loss: 3.1480, Val Loss: 3.2460, LR: 0.000219, Tokens/s: 1,081,721
+Step 5600, Train Loss: 3.1978, Val Loss: 3.2417, LR: 0.000215, Tokens/s: 1,117,525
+Step 5700, Train Loss: 3.2071, Val Loss: 3.2379, LR: 0.000212, Tokens/s: 1,111,928
+Step 5800, Train Loss: 3.1615, Val Loss: 3.2394, LR: 0.000208, Tokens/s: 1,117,867
+Step 5900, Train Loss: 3.1640, Val Loss: 3.2249, LR: 0.000205, Tokens/s: 1,117,563
+Step 6000, Train Loss: 3.1581, Val Loss: 3.2271, LR: 0.000201, Tokens/s: 1,117,666
+Step 6100, Train Loss: 3.1630, Val Loss: 3.2176, LR: 0.000198, Tokens/s: 1,077,720
+Step 6200, Train Loss: 3.1658, Val Loss: 3.2143, LR: 0.000194, Tokens/s: 1,117,962
+Step 6300, Train Loss: 3.1589, Val Loss: 3.2208, LR: 0.000191, Tokens/s: 1,117,853
+Step 6400, Train Loss: 3.1680, Val Loss: 3.2048, LR: 0.000187, Tokens/s: 1,111,988
+Step 6500, Train Loss: 3.1464, Val Loss: 3.1995, LR: 0.000183, Tokens/s: 1,117,406
+Step 6600, Train Loss: 3.1542, Val Loss: 3.1902, LR: 0.000180, Tokens/s: 1,117,750
+Step 6700, Train Loss: 3.1468, Val Loss: 3.1799, LR: 0.000176, Tokens/s: 1,083,367
+Step 6800, Train Loss: 3.1453, Val Loss: 3.1798, LR: 0.000172, Tokens/s: 1,111,995
+Step 6900, Train Loss: 3.1294, Val Loss: 3.1791, LR: 0.000168, Tokens/s: 1,117,651
+Step 7000, Train Loss: 3.1429, Val Loss: 3.1896, LR: 0.000165, Tokens/s: 1,110,649
+Step 7100, Train Loss: 3.1544, Val Loss: 3.1745, LR: 0.000161, Tokens/s: 1,117,410
+Step 7200, Train Loss: 3.0984, Val Loss: 3.1759, LR: 0.000157, Tokens/s: 1,117,756
+Step 7300, Train Loss: 3.0971, Val Loss: 3.1681, LR: 0.000154, Tokens/s: 1,110,511
+Step 7400, Train Loss: 3.1001, Val Loss: 3.1706, LR: 0.000150, Tokens/s: 1,082,054
+Step 7500, Train Loss: 3.1167, Val Loss: 3.1584, LR: 0.000146, Tokens/s: 1,117,683
+Step 7600, Train Loss: 3.1165, Val Loss: 3.1595, LR: 0.000143, Tokens/s: 1,111,486
+Step 7700, Train Loss: 3.0569, Val Loss: 3.1485, LR: 0.000139, Tokens/s: 1,117,748
+Step 7800, Train Loss: 3.0514, Val Loss: 3.1701, LR: 0.000135, Tokens/s: 1,117,860
+Step 7900, Train Loss: 3.1316, Val Loss: 3.1593, LR: 0.000132, Tokens/s: 1,117,435
+Step 8000, Train Loss: 3.0902, Val Loss: 3.1625, LR: 0.000128, Tokens/s: 1,077,313
+Step 8100, Train Loss: 3.1357, Val Loss: 3.1540, LR: 0.000125, Tokens/s: 1,117,735
+Step 8200, Train Loss: 3.0835, Val Loss: 3.1555, LR: 0.000121, Tokens/s: 1,117,581
+Step 8300, Train Loss: 3.0805, Val Loss: 3.1619, LR: 0.000118, Tokens/s: 1,112,119
+Step 8400, Train Loss: 3.0515, Val Loss: 3.1517, LR: 0.000114, Tokens/s: 1,117,174
+Step 8500, Train Loss: 3.1282, Val Loss: 3.1513, LR: 0.000111, Tokens/s: 1,117,699
+Step 8600, Train Loss: 3.0703, Val Loss: 3.1416, LR: 0.000107, Tokens/s: 1,083,155
+Step 8700, Train Loss: 3.1037, Val Loss: 3.1436, LR: 0.000104, Tokens/s: 1,110,600
+Step 8800, Train Loss: 3.0594, Val Loss: 3.1428, LR: 0.000101, Tokens/s: 1,117,606
+Step 8900, Train Loss: 3.1223, Val Loss: 3.1471, LR: 0.000098, Tokens/s: 1,111,490
+Step 9000, Train Loss: 3.0626, Val Loss: 3.1336, LR: 0.000094, Tokens/s: 1,117,863
+Step 9100, Train Loss: 3.0802, Val Loss: 3.1429, LR: 0.000091, Tokens/s: 1,117,631
+Step 9200, Train Loss: 3.0476, Val Loss: 3.1337, LR: 0.000088, Tokens/s: 1,105,054
+Step 9300, Train Loss: 3.0423, Val Loss: 3.1285, LR: 0.000085, Tokens/s: 1,093,217
+Step 9400, Train Loss: 3.0517, Val Loss: 3.1240, LR: 0.000082, Tokens/s: 1,117,104
+Step 9500, Train Loss: 3.0147, Val Loss: 3.1301, LR: 0.000079, Tokens/s: 1,111,316
+Step 9600, Train Loss: 3.0710, Val Loss: 3.1182, LR: 0.000076, Tokens/s: 1,117,299
+Step 9700, Train Loss: 3.0757, Val Loss: 3.1235, LR: 0.000074, Tokens/s: 1,118,426
+Step 9800, Train Loss: 3.0379, Val Loss: 3.1219, LR: 0.000071, Tokens/s: 1,117,856
+Step 9900, Train Loss: 3.0488, Val Loss: 3.1216, LR: 0.000068, Tokens/s: 1,077,691
+Step 10000, Train Loss: 3.0399, Val Loss: 3.1187, LR: 0.000066, Tokens/s: 1,117,767
+Step 10100, Train Loss: 2.9934, Val Loss: 3.1231, LR: 0.000063, Tokens/s: 1,117,582
+Step 10200, Train Loss: 3.0428, Val Loss: 3.1088, LR: 0.000061, Tokens/s: 1,112,039
+Step 10300, Train Loss: 3.0721, Val Loss: 3.1162, LR: 0.000059, Tokens/s: 1,117,405
+Step 10400, Train Loss: 3.0354, Val Loss: 3.1104, LR: 0.000056, Tokens/s: 1,117,860
+Step 10500, Train Loss: 2.9957, Val Loss: 3.1081, LR: 0.000054, Tokens/s: 1,080,893
+Step 10600, Train Loss: 3.0507, Val Loss: 3.1089, LR: 0.000052, Tokens/s: 1,110,692
+Step 10700, Train Loss: 3.0514, Val Loss: 3.1120, LR: 0.000050, Tokens/s: 1,117,229
+Step 10800, Train Loss: 3.0503, Val Loss: 3.1080, LR: 0.000048, Tokens/s: 1,111,703
+Step 10900, Train Loss: 3.0476, Val Loss: 3.1094, LR: 0.000046, Tokens/s: 1,117,288
+Step 11000, Train Loss: 3.0303, Val Loss: 3.1081, LR: 0.000045, Tokens/s: 1,117,830
+Step 11100, Train Loss: 3.0140, Val Loss: 3.1064, LR: 0.000043, Tokens/s: 1,100,097
+Step 11200, Train Loss: 3.0726, Val Loss: 3.0985, LR: 0.000042, Tokens/s: 1,094,007
+Step 11300, Train Loss: 3.0297, Val Loss: 3.1019, LR: 0.000040, Tokens/s: 1,117,554
+Step 11400, Train Loss: 3.0518, Val Loss: 3.0947, LR: 0.000039, Tokens/s: 1,111,913
+Step 11500, Train Loss: 2.9918, Val Loss: 3.0950, LR: 0.000037, Tokens/s: 1,117,814
+Step 11600, Train Loss: 3.0223, Val Loss: 3.0975, LR: 0.000036, Tokens/s: 1,117,639
+Step 11700, Train Loss: 3.0893, Val Loss: 3.0993, LR: 0.000035, Tokens/s: 1,117,855
+Step 11800, Train Loss: 3.0192, Val Loss: 3.0957, LR: 0.000034, Tokens/s: 1,077,270
+Step 11900, Train Loss: 3.0105, Val Loss: 3.0932, LR: 0.000033, Tokens/s: 1,117,449
+Step 12000, Train Loss: 3.0210, Val Loss: 3.0991, LR: 0.000033, Tokens/s: 1,117,718
+Step 12100, Train Loss: 3.0463, Val Loss: 3.0932, LR: 0.000032, Tokens/s: 1,111,917
+Step 12200, Train Loss: 3.0199, Val Loss: 3.0876, LR: 0.000031, Tokens/s: 1,116,851
+Step 12300, Train Loss: 3.0112, Val Loss: 3.0885, LR: 0.000031, Tokens/s: 1,117,631
+Step 12400, Train Loss: 3.0695, Val Loss: 3.0968, LR: 0.000031, Tokens/s: 1,081,916
+Step 12500, Train Loss: 3.0256, Val Loss: 3.0911, LR: 0.000030, Tokens/s: 1,111,629
+Step 12600, Train Loss: 3.0350, Val Loss: 3.0910, LR: 0.000030, Tokens/s: 1,117,615
+Step 12700, Train Loss: 3.0485, Val Loss: 3.0890, LR: 0.000030, Tokens/s: 1,111,582
+Model saved

@@ -18,7 +18,7 @@ class TrainConfig:
     accum_steps = 12
     lr = 3e-4
     min_lr = 3e-5
-    token_budget = 24_000_000_000
+    token_budget = 30_000_000_000
     warmrup_ratio = 0.1
     weight_decay = 0.1
     max_grad_norm = 1.0
