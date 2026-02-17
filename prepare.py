@@ -28,6 +28,7 @@ from tqdm import tqdm
 from datasets import load_dataset
 
 DATASET_NAME = "HuggingFaceFW/fineweb-edu"
+DATASET_CONFIG = "sample-100BT"
 VAL_RATIO = 0.0005
 SEED = 2357
 DTYPE = np.uint16
@@ -58,7 +59,12 @@ def _stable_hash_u64(s: str) -> int:
 
 def prepare_cached():
     split = HF_SPLIT or "train"
-    ds = load_dataset(DATASET_NAME, split=split)
+    ds = load_dataset(
+    DATASET_NAME,
+    DATASET_CONFIG,             
+    split=split,
+    streaming=STREAMING,
+    )
     split_ds = ds.train_test_split(test_size=VAL_RATIO, seed=SEED, shuffle=True)
     split_ds["val"] = split_ds.pop("test")
     tok = split_ds.map(
