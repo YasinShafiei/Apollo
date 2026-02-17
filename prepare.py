@@ -27,7 +27,7 @@ import tiktoken
 from tqdm import tqdm
 from datasets import load_dataset
 
-DATASET_NAME = "openwebtext"
+DATASET_NAME = "HuggingFaceFW/fineweb-edu"
 VAL_RATIO = 0.0005
 SEED = 2357
 DTYPE = np.uint16
@@ -41,7 +41,6 @@ HF_SPLIT = None
 _enc = tiktoken.get_encoding("gpt2")
 _eot = _enc.eot_token
 
-
 def tokenize_batch(batch: Dict[str, List[str]]) -> Dict[str, List]:
     texts = batch["text"]
     ids = []
@@ -53,11 +52,9 @@ def tokenize_batch(batch: Dict[str, List[str]]) -> Dict[str, List]:
         lens.append(len(tok))
     return {"ids": ids, "len": lens}
 
-
 def _stable_hash_u64(s: str) -> int:
     h = hashlib.blake2b(s.encode("utf-8", errors="ignore"), digest_size=8).digest()
     return int.from_bytes(h, "little", signed=False)
-
 
 def prepare_cached():
     split = HF_SPLIT or "train"
@@ -98,7 +95,6 @@ def prepare_cached():
         assert idx == arr_len, f"wrote {idx} tokens, expected {arr_len}"
 
     print("\nDone. train.bin and val.bin are ready.")
-
 
 def prepare_streaming():
     split = HF_SPLIT or "train"
@@ -164,7 +160,6 @@ def prepare_streaming():
 
     print(f"\nDone. train.bin ({train_tokens:,} tokens), val.bin ({val_tokens:,} tokens), docs seen: {docs:,}")
     print("Note: streaming mode avoids the huge HF cache, but can be slower than cached mode.")
-
 
 if __name__ == "__main__":
     os.makedirs(OUT_DIR, exist_ok=True)
