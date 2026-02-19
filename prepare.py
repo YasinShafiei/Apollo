@@ -1,13 +1,13 @@
 import os
-import math
+import json
 import hashlib
-from typing import Dict, List
+import time
+from typing import List, Dict
 
 # Check for filelock compatibility issue before importing huggingface libraries
 def _check_dependencies():
     try:
         import filelock
-        # Check if filelock supports the 'mode' parameter (added in filelock >= 3.4.1)
         import inspect
         sig = inspect.signature(filelock.FileLock.__init__)
         if 'mode' not in sig.parameters:
@@ -22,155 +22,107 @@ def _check_dependencies():
 
 _check_dependencies()
 
-import numpy as np
-import tiktoken
-from tqdm import tqdm
-from datasets import load_dataset
+from huggingface_hub import snapshot_download, HfApi
+import pyarrow.parquet as pq
 
-DATASET_NAME = "HuggingFaceFW/fineweb-edu"
-DATASET_CONFIG = "sample-100BT"
+DATASET_REPO = "HuggingFaceFW/fineweb-edu"
+DATASET_SUBDIR = "sample/100BT"
+
+OUT_DIR = "data"
+PARQUET_DIR = os.path.join(OUT_DIR, "fineweb_edu", "parquet")
+
 VAL_RATIO = 0.0005
 SEED = 2357
-DTYPE = np.uint16
-NUM_PROC = max(1, os.cpu_count() // 2)
-BATCH_SIZE_MAP = 1000
-WRITE_CHUNK_DOCS = 2048
-STREAMING = False
-OUT_DIR = "data"
-HF_SPLIT = None
 
-_enc = tiktoken.get_encoding("gpt2")
-_eot = _enc.eot_token
-
-def tokenize_batch(batch: Dict[str, List[str]]) -> Dict[str, List]:
-    texts = batch["text"]
-    ids = []
-    lens = []
-    for t in texts:
-        tok = _enc.encode_ordinary(t)
-        tok.append(_eot)
-        ids.append(tok)
-        lens.append(len(tok))
-    return {"ids": ids, "len": lens}
+# Optional: limit how many parquet shards you download (useful for testing).
+MAX_FILES = None
 
 def _stable_hash_u64(s: str) -> int:
     h = hashlib.blake2b(s.encode("utf-8", errors="ignore"), digest_size=8).digest()
     return int.from_bytes(h, "little", signed=False)
 
-def prepare_cached():
-    split = HF_SPLIT or "train"
-    ds = load_dataset(
-    DATASET_NAME,
-    DATASET_CONFIG,             
-    split=split,
-    streaming=STREAMING,
-    )
-    split_ds = ds.train_test_split(test_size=VAL_RATIO, seed=SEED, shuffle=True)
-    split_ds["val"] = split_ds.pop("test")
-    tok = split_ds.map(
-        tokenize_batch,
-        batched=True,
-        batch_size=BATCH_SIZE_MAP,
-        remove_columns=["text"],
-        num_proc=NUM_PROC,
-        desc="tokenizing",
-    )
+def _list_parquet_files(repo_id: str, subdir: str) -> List[str]:
+    api = HfApi()
+    files = api.list_repo_files(repo_id=repo_id, repo_type="dataset")
+    pref = subdir.rstrip("/") + "/"
+    out = [f for f in files if f.startswith(pref) and f.endswith(".parquet")]
+    out.sort()
+    return out
 
+def _split_files(files: List[str]) -> Dict[str, List[str]]:
+    train, val = [], []
+    thresh = int(VAL_RATIO * 1_000_000)
+    for f in files:
+        h = _stable_hash_u64(f"{SEED}:{f}")
+        in_val = (h % 1_000_000) < thresh
+        (val if in_val else train).append(f)
+    return {"train": train, "val": val}
+
+def _write_manifest_jsonl(manifest_path: str, local_paths: List[str], split_name: str):
+    os.makedirs(os.path.dirname(manifest_path), exist_ok=True)
+    n_files = 0
+    total_rows = 0
+    with open(manifest_path, "w", encoding="utf-8") as w:
+        for p in local_paths:
+            pf = pq.ParquetFile(p)
+            md = pf.metadata
+            rows = int(md.num_rows) if md is not None else 0
+            rgs = int(md.num_row_groups) if md is not None else 0
+            w.write(json.dumps({"path": p, "split": split_name, "rows": rows, "row_groups": rgs}) + "\n")
+            n_files += 1
+            total_rows += rows
+    print(f"{split_name}: wrote manifest {manifest_path} ({n_files} files, {total_rows:,} rows)")
+
+def prepare():
     os.makedirs(OUT_DIR, exist_ok=True)
+    os.makedirs(PARQUET_DIR, exist_ok=True)
+    os.makedirs("models", exist_ok=True)
 
-    for split_name, dset in tok.items():
-        arr_len = int(np.sum(dset["len"], dtype=np.uint64))
-        out_path = os.path.join(OUT_DIR, f"{split_name}.bin")
-        print(f"\nwriting {out_path} ({arr_len:,} tokens) ...")
+    print(f"listing parquet shards in {DATASET_REPO}/{DATASET_SUBDIR} ...")
+    repo_files = _list_parquet_files(DATASET_REPO, DATASET_SUBDIR)
+    if not repo_files:
+        raise RuntimeError(f"no parquet files found under {DATASET_SUBDIR}")
 
-        arr = np.memmap(out_path, dtype=DTYPE, mode="w+", shape=(arr_len,))
-        idx = 0
-        dset_np = dset.with_format("numpy")
-        n = len(dset_np)
-        n_chunks = math.ceil(n / WRITE_CHUNK_DOCS)
+    if MAX_FILES is not None:
+        repo_files = repo_files[:MAX_FILES]
+        print(f"MAX_FILES is set -> using only {len(repo_files)} shards")
 
-        for c in tqdm(range(n_chunks), desc=f"writing {split_name}"):
-            start = c * WRITE_CHUNK_DOCS
-            end = min(n, (c + 1) * WRITE_CHUNK_DOCS)
-            batch = dset_np[start:end]
-            flat = np.concatenate(batch["ids"]).astype(DTYPE, copy=False)
-            arr[idx: idx + flat.size] = flat
-            idx += flat.size
+    splits = _split_files(repo_files)
+    print(f"split: train={len(splits['train'])} files, val={len(splits['val'])} files (VAL_RATIO={VAL_RATIO})")
 
-        arr.flush()
-        assert idx == arr_len, f"wrote {idx} tokens, expected {arr_len}"
+    allow = splits["train"] + splits["val"]
+    print(f"downloading {len(allow)} parquet files into {PARQUET_DIR} ...")
 
-    print("\nDone. train.bin and val.bin are ready.")
+    # This writes actual files under data/, making the dataset self-contained.
+    snapshot_download(
+        repo_id=DATASET_REPO,
+        repo_type="dataset",
+        allow_patterns=allow,
+        local_dir=PARQUET_DIR,
+        local_dir_use_symlinks=False,
+        resume_download=True,
+    )
 
-def prepare_streaming():
-    split = HF_SPLIT or "train"
-    it = load_dataset(DATASET_NAME, split=split, streaming=True)
+    # snapshot_download preserves the repo file tree under local_dir
+    train_local = [os.path.join(PARQUET_DIR, f) for f in splits["train"]]
+    val_local = [os.path.join(PARQUET_DIR, f) for f in splits["val"]]
 
-    os.makedirs(OUT_DIR, exist_ok=True)
-    train_path = os.path.join(OUT_DIR, "train.bin")
-    val_path = os.path.join(OUT_DIR, "val.bin")
-    ft = open(train_path, "wb")
-    fv = open(val_path, "wb")
-    buf_t = []
-    buf_v = []
-    buf_t_n = 0
-    buf_v_n = 0
-    FLUSH_TOKENS = 8_000_000
+    train_manifest = os.path.join(OUT_DIR, "fineweb_edu_train.jsonl")
+    val_manifest = os.path.join(OUT_DIR, "fineweb_edu_val.jsonl")
 
-    train_tokens = 0
-    val_tokens = 0
-    docs = 0
+    print("building manifests (this reads parquet metadata only) ...")
+    _write_manifest_jsonl(train_manifest, train_local, "train")
+    _write_manifest_jsonl(val_manifest, val_local, "val")
 
-    print("\nstreaming + tokenizing + writing ...")
-    for ex in tqdm(it):
-        text = ex["text"]
-        docs += 1
-
-        tok = _enc.encode_ordinary(text)
-        tok.append(_eot)
-        h = _stable_hash_u64(f"{SEED}:{text[:256]}")
-        in_val = (h % 1_000_000) < int(VAL_RATIO * 1_000_000)
-
-        if in_val:
-            buf_v.append(tok)
-            buf_v_n += len(tok)
-        else:
-            buf_t.append(tok)
-            buf_t_n += len(tok)
-
-        if buf_t_n >= FLUSH_TOKENS:
-            flat = np.asarray([x for xs in buf_t for x in xs], dtype=DTYPE)
-            flat.tofile(ft)
-            train_tokens += flat.size
-            buf_t.clear()
-            buf_t_n = 0
-
-        if buf_v_n >= FLUSH_TOKENS:
-            flat = np.asarray([x for xs in buf_v for x in xs], dtype=DTYPE)
-            flat.tofile(fv)
-            val_tokens += flat.size
-            buf_v.clear()
-            buf_v_n = 0
-
-    if buf_t:
-        flat = np.asarray([x for xs in buf_t for x in xs], dtype=DTYPE)
-        flat.tofile(ft)
-        train_tokens += flat.size
-    if buf_v:
-        flat = np.asarray([x for xs in buf_v for x in xs], dtype=DTYPE)
-        flat.tofile(fv)
-        val_tokens += flat.size
-
-    ft.close()
-    fv.close()
-
-    print(f"\nDone. train.bin ({train_tokens:,} tokens), val.bin ({val_tokens:,} tokens), docs seen: {docs:,}")
-    print("Note: streaming mode avoids the huge HF cache, but can be slower than cached mode.")
+    print("\nDone.")
+    print(f"parquets:       {PARQUET_DIR}")
+    print(f"train manifest: {train_manifest}")
+    print(f"val manifest:   {val_manifest}")
 
 if __name__ == "__main__":
-    os.makedirs(OUT_DIR, exist_ok=True)
-    os.makedirs("models", exist_ok=True)
-    if STREAMING:
-        prepare_streaming()
-    else:
-        prepare_cached()
+    start_time = time.time()
+    prepare()
+    elapsed = time.time() - start_time
+    minutes = int(elapsed // 60)
+    seconds = int(elapsed % 60)
+    print(f"\n{minutes}m, {seconds}s")
