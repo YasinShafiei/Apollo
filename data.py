@@ -1,58 +1,91 @@
-import numpy as np
+import os
+import json
+import math
+import random
 
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import IterableDataset, DataLoader
 
-class DatasetSampler:
-    def __init__(self, dataset_size, batch_size, rank, world_size, shuffle=True, seed=42, samples_per_epoch=500_000):
-        self.dataset_size = dataset_size
-        self.batch_size = batch_size
-        self.rank = rank
-        self.world_size = world_size
-        self.shuffle = shuffle
-        self.seed = seed
-        self.epoch = 0
-        
-        self.samples_per_epoch = samples_per_epoch
-        
-    def set_epoch(self, epoch):
-        self.epoch = epoch
-    
-    def __iter__(self):
-        rng = torch.Generator()
-        rng.manual_seed(self.seed + self.epoch + self.rank * 1000)
-        
-        for _ in range(self.samples_per_epoch):
-            if self.shuffle:
-                idx = torch.randint(0, self.dataset_size, (1,), generator=rng).item()
-            else:
-                idx = (_ + self.rank * self.samples_per_epoch) % self.dataset_size
-            yield idx
-    
-    def __len__(self):
-        return self.samples_per_epoch
+import pyarrow.parquet as pq
+import tiktoken
 
-class GPTDataset(Dataset):
-    def __init__(self, filename, max_seq_len):
-        self.filename = filename
+
+class FineWebDataset(IterableDataset):
+    def __init__(self, manifest_path, max_seq_len, tokenizer_name="cl100k_base", seed=42, shuffle=True):
+        self.manifest_path = manifest_path
         self.max_seq_len = max_seq_len
-        self.data = None 
+        self.seed = seed
+        self.shuffle = shuffle
 
-    def _init_db(self):
-        # Initialize the memmap only once per process
-        self.data = np.memmap(self.filename, dtype=np.uint16, mode='r')
+        self.enc = tiktoken.get_encoding(tokenizer_name)
+        self.eot = self.enc.eot_token
 
-    def __len__(self):
-        if self.data is None:
-            self._init_db()
-        return len(self.data) - self.max_seq_len 
-    
-    def __getitem__(self, idx):
-        if self.data is None:
-            self._init_db()
-    
-        # Use int64 directly to avoid casting issues in the model
-        buffer = self.data[idx:idx + self.max_seq_len + 1].astype(np.int64)
-        x = torch.from_numpy(buffer[:-1])
-        y = torch.from_numpy(buffer[1:])
-        return x, y
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            self.files = [json.loads(l)["path"] for l in f if l.strip]
+
+    def _worker_files(self):
+        info = torch.utils.data.get_worker_info()
+        if info is None:
+            return self.files
+
+        per_worker = int(math.ceil(len(self.files) / info.num_workers))
+        start = info.id * per_worker
+        end = min(start + per_worker, len(self.files))
+        return self.files[start:end]
+
+    def _iter_texts_from_parquet(self, path):
+        pf = pq.ParquetFile(path)
+        for rg in range(pf.num_row_groups):
+            table = pf.read_row_group(rg, columns=["text"])
+            col = table.column("text")
+            for t in col.to_pylist():
+                if t:
+                    yield t
+
+    def __iter__(self):
+        info = torch.utils.data.get_worker_info()
+        wid = 0 if info is None else info.id
+
+        rng = random.Random(self.seed + wid * 1000)
+        files = self._worker_files()
+        if self.shuffle:
+            rng.shuffle(files)
+
+        buf = []
+        for path in files:
+            for text in self._iter_texts_from_parquet(path):
+                ids = self.enc.encode_ordinary(text)
+                if ids:
+                    buf.extend(ids)
+                    buf.append(self.eot)
+
+                while len(buf) >= self.max_seq_len + 1:
+                    chunk = buf[: self.max_seq_len + 1]
+                    del buf[: self.max_seq_len]
+
+                    x = torch.tensor(chunk[:-1], dtype=torch.long)
+                    y = torch.tensor(chunk[1:], dtype=torch.long)
+                    yield x, y
+
+
+if __name__ == "__main__":
+    dataset = FineWebDataset(
+        manifest_path="data/fineweb_edu_train.jsonl",
+        max_seq_len=1024,
+        tokenizer_name="gpt2",
+        seed=42,
+        shuffle=True,
+    )
+
+    loader = DataLoader(
+        dataset,
+        batch_size=8,
+        num_workers=4,
+        pin_memory=True,
+    )
+
+    x, y = next(iter(dataset))
+    print("single sample x:", x.shape, "y:", y.shape)
+
+    xb, yb = next(iter(loader))
+    print("one batch xb:", xb.shape, "yb:", yb.shape)
