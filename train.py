@@ -7,12 +7,11 @@ import torch
 import torch.nn.functional as F
 import torch.distributed as dist
 from torch.amp import autocast
-from torch.utils.data import DataLoader, Subset
-from torch.utils.data.distributed import DistributedSampler
+from torch.utils.data import DataLoader
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from model import Model
-from data import GPTDataset, DatasetSampler
+from data import FineWebDataset
 from train_utils import *
 from dist_utils import *
 from config import *
@@ -48,7 +47,6 @@ def train(model, optimizer, train_loader, val_loader, local_rank, world_size, mo
             try:
                 input, target = next(train_iter)
             except StopIteration:
-                train_loader.sampler.set_epoch(step)
                 train_iter = iter(train_loader)
                 input, target = next(train_iter)
             
@@ -120,14 +118,21 @@ def main():
         print(f"running on {world_size} GPUs")
     
     # datasets
-    train_dataset = GPTDataset(filename=paths_cfg.pretrain_train_data_path, max_seq_len=model_cfg.max_seq_len)
-    test_dataset  = GPTDataset(filename=paths_cfg.pretrain_val_data_path, max_seq_len=model_cfg.max_seq_len)
+    train_dataset = FineWebDataset(
+        manifest_path=paths_cfg.pretrain_train_manifest_path,
+        max_seq_len=model_cfg.max_seq_len,
+        seed=42,
+        shuffle=True,
+    )
+    val_dataset = FineWebDataset(
+        manifest_path=paths_cfg.pretrain_val_manifest_path,
+        max_seq_len=model_cfg.max_seq_len,
+        seed=42,
+        shuffle=False,
+    )
 
-    train_sampler = DatasetSampler(len(train_dataset), train_cfg.micro_batch_size, dist.get_rank(), world_size, shuffle=True)
-    val_sampler = DatasetSampler(len(test_dataset), train_cfg.micro_batch_size, dist.get_rank(), world_size, shuffle=False)
-    
-    train_loader = DataLoader(train_dataset, batch_size=train_cfg.micro_batch_size, sampler=train_sampler, num_workers=4, pin_memory=True)
-    val_loader   = DataLoader(test_dataset, batch_size=train_cfg.micro_batch_size, sampler=val_sampler, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=train_cfg.micro_batch_size, num_workers=4, pin_memory=True)
+    val_loader   = DataLoader(val_dataset, batch_size=train_cfg.micro_batch_size, num_workers=4, pin_memory=True)
     
     # model on specific GPU with BF16
     model = Model(model_cfg.vocab_size, model_cfg.embed_dim, model_cfg.n_layers, model_cfg.n_heads, model_cfg.n_kv_heads, model_cfg.hidden_dim, model_cfg.max_seq_len).to(local_rank)

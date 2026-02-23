@@ -36,8 +36,8 @@ class SFTConfig:
 @dataclass
 class Paths:
     pretrained_path = "models/apollo_pretrained.pt"
-    pretrain_train_data_path = "data/train.bin"
-    pretrain_val_data_path = "data/val.bin"
+    pretrain_train_manifest_path = "data/fineweb_edu_train.jsonl"
+    pretrain_val_manifest_path = "data/fineweb_edu_val.jsonl"
     sft_path = "apollo_sft.pt"
     sft_data_path = "alpaca.json"
 
