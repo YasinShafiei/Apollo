@@ -47,7 +47,7 @@ class RotaryEmbedding(nn.Module):
     
 
 class GroupedQueryAttention(nn.Module):
-    def __init__(self, embed_dim, n_heads, n_kv_heads, max_seq_len, dropout=0.1):
+    def __init__(self, embed_dim, n_heads, n_kv_heads, max_seq_len, dropout=0.0):
         super().__init__()
 
         self.n_heads = n_heads
@@ -135,7 +135,7 @@ class FeedForward(nn.Module):
         return self.dropout(out)
 
 class TransformerBlock(nn.Module):
-    def __init__(self, embed_dim, n_heads, n_kv_heads, max_seq_len, hidden_dim=None, dropout=0.1):
+    def __init__(self, embed_dim, n_heads, n_kv_heads, max_seq_len, hidden_dim=None, dropout=0.0):
         super().__init__()
 
         # define norm layers
@@ -155,7 +155,7 @@ class TransformerBlock(nn.Module):
         return x
     
 class Model(nn.Module):
-    def __init__(self, vocab_size, embed_dim, n_layers, n_heads, n_kv_heads, hidden_dim, max_seq_len, dropout=0.1):
+    def __init__(self, vocab_size, embed_dim, n_layers, n_heads, n_kv_heads, hidden_dim, max_seq_len, dropout=0.0):
         super().__init__()
         # token embedding 
         self.tok_emb = nn.Embedding(vocab_size, embed_dim)
@@ -193,6 +193,7 @@ class Model(nn.Module):
         loss = None
         if targets is not None:
             B, T, C = logits.shape
+            logits = logits.float()
             loss = F.cross_entropy(logits.view(B * T, C), targets.view(B*T))
         
         return logits, loss
