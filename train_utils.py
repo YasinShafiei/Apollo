@@ -67,3 +67,54 @@ def validate(model, val_loader, local_rank, val_steps=20, sft=False):
 
     return val_loss / val_steps
 
+
+# gpu monitoring utilities for wandb logging
+import subprocess
+
+def get_gpu_stats(device_index=0):
+    stats = {}
+    try:
+        result = subprocess.run(
+            [
+                "nvidia-smi",
+                f"--id={device_index}",
+                "--query-gpu=utilization.gpu,temperature.gpu,memory.used,memory.total,power.draw,power.limit",
+                "--format=csv,noheader,nounits",
+            ],
+            capture_output=True, text=True, timeout=5
+        )
+        if result.returncode == 0:
+            parts = [p.strip() for p in result.stdout.strip().split(",")]
+            stats["gpu/utilization_pct"] = float(parts[0])
+            stats["gpu/temperature_C"] = float(parts[1])
+            stats["gpu/memory_used_MB"] = float(parts[2])
+            stats["gpu/memory_total_MB"] = float(parts[3])
+            stats["gpu/memory_used_pct"] = float(parts[2]) / float(parts[3]) * 100
+            stats["gpu/power_draw_W"] = float(parts[4])
+            stats["gpu/power_limit_W"] = float(parts[5])
+    except Exception:
+        pass
+
+    # pytorch-level cuda memory stats
+    if torch.cuda.is_available():
+        stats["gpu/torch_memory_allocated_MB"] = torch.cuda.memory_allocated(device_index) / 1e6
+        stats["gpu/torch_memory_reserved_MB"] = torch.cuda.memory_reserved(device_index) / 1e6
+        stats["gpu/torch_max_memory_allocated_MB"] = torch.cuda.max_memory_allocated(device_index) / 1e6
+
+    return stats
+
+
+def get_all_gpu_stats(world_size):
+    all_stats = {}
+    for i in range(world_size):
+        per_gpu = get_gpu_stats(i)
+        for k, v in per_gpu.items():
+            all_stats[f"{k}/gpu_{i}"] = v
+    # log averages across gpus
+    keys_to_avg = ["gpu/utilization_pct", "gpu/temperature_C", "gpu/memory_used_pct", "gpu/power_draw_W"]
+    for key in keys_to_avg:
+        vals = [get_gpu_stats(i).get(key) for i in range(world_size)]
+        vals = [v for v in vals if v is not None]
+        if vals:
+            all_stats[f"{key}/avg"] = sum(vals) / len(vals)
+    return all_stats
