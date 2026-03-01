@@ -3,7 +3,7 @@ from dataclasses import dataclass
 @dataclass
 class ModelConfig:
     # 367m config 
-    vocab_size = 50257
+    vocab_size = 100277
     embed_dim = 1024
     n_layers = 28
     n_heads = 16
