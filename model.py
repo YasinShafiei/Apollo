@@ -200,7 +200,7 @@ class Model(nn.Module):
 
 if __name__ == "__main__":
     # Simple test parameters
-    vocab_size = 50257
+    vocab_size = 100277
     embed_dim = 768  # Must be divisible by n_heads
     n_layers = 16
     n_heads = 12
