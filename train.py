@@ -57,20 +57,22 @@ def train(model, optimizer, train_loader, val_loader, local_rank, world_size, mo
             input = input.to(local_rank)
             target = target.to(local_rank)
             
-            # disable gradient sync for all but the last micro step
-            if micro_step < train_cfg.accum_steps - 1:
-                with model.no_sync():
-                    with autocast(device_type='cuda', dtype=torch.bfloat16):
-                        out, loss = model(input, target)
-                    scaled_loss = loss / train_cfg.accum_steps
-                    scaled_loss.backward()
-            else:
+            # always disable DDP gradient sync during backward to keep
+            # the backward graph structure consistent for CUDA graphs
+            # (NCCL allreduce is not capturable by CUDA graphs)
+            with model.no_sync():
                 with autocast(device_type='cuda', dtype=torch.bfloat16):
                     out, loss = model(input, target)
                 scaled_loss = loss / train_cfg.accum_steps
                 scaled_loss.backward()
             
             accum_loss += loss.item()
+
+        # manually synchronize gradients across all ranks after
+        # accumulation, outside the compiled backward graph
+        for param in model.parameters():
+            if param.grad is not None:
+                dist.all_reduce(param.grad, op=dist.ReduceOp.AVG)
         
         # average loss over accumulation steps
         avg_loss = accum_loss / train_cfg.accum_steps
@@ -179,7 +181,7 @@ def main():
     # model on specific GPU with BF16
     model = Model(model_cfg.vocab_size, model_cfg.embed_dim, model_cfg.n_layers, model_cfg.n_heads, model_cfg.n_kv_heads, model_cfg.hidden_dim, model_cfg.max_seq_len).to(local_rank)
     model.device = local_rank
-    model = torch.compile(model)
+    model = torch.compile(model, mode="max-autotune")
 
     # print total number of parameters
     if is_main_process():
