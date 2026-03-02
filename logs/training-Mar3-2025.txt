@@ -1,0 +1,208 @@
+training for 12,715 steps
+effective batch size: 2304
+warmup steps: 1271
+tokens per step: 2,359,296
+starting training loop
+[rank0]:W0302 00:15:13.107000 139954239533696 torch/fx/experimental/symbolic_shapes.py:4449] [0/0] xindex is not in var_ranges, defaulting to unknown range.
+first step completed, loss: 11.6821
+AUTOTUNE mm(24576x1024, 1024x2048)
+  mm 0.1481 ms 100.0%
+  triton_mm_11284 0.1901 ms 77.9%
+  triton_mm_11285 0.1967 ms 75.3%
+  triton_mm_11283 0.2078 ms 71.3%
+  triton_mm_11279 0.2448 ms 60.5%
+  triton_mm_11278 0.2598 ms 57.0%
+  triton_mm_11282 0.2689 ms 55.1%
+  triton_mm_11281 0.2958 ms 50.1%
+  triton_mm_11277 0.2959 ms 50.0%
+  triton_mm_11280 0.2964 ms 50.0%
+SingleProcess AUTOTUNE benchmarking takes 2.4966 seconds and 62.0042 seconds precompiling
+AUTOTUNE mm(24576x1024, 1024x2048)
+  mm 0.1504 ms 100.0%
+  triton_mm_11265 0.1870 ms 80.5%
+  triton_mm_11266 0.1937 ms 77.7%
+  triton_mm_11264 0.2073 ms 72.5%
+  triton_mm_11260 0.2480 ms 60.7%
+  triton_mm_11259 0.2605 ms 57.7%
+  triton_mm_11263 0.2680 ms 56.1%
+  triton_mm_11258 0.2959 ms 50.8%
+  triton_mm_11262 0.2960 ms 50.8%
+  triton_mm_11257 0.2969 ms 50.7%
+SingleProcess AUTOTUNE benchmarking takes 2.4963 seconds and 0.0000 seconds precompiling
+[rank0]:W0302 00:22:02.866000 139954239533696 torch/fx/experimental/symbolic_shapes.py:4449] [0/1] xindex is not in var_ranges, defaulting to unknown range.
+AUTOTUNE mm(24576x1024, 1024x2048)
+  mm 0.1465 ms 100.0%
+  triton_mm_11398 0.1919 ms 76.3%
+  triton_mm_11399 0.1967 ms 74.5%
+  triton_mm_11397 0.2073 ms 70.7%
+  triton_mm_11393 0.2470 ms 59.3%
+  triton_mm_11392 0.2605 ms 56.2%
+  triton_mm_11396 0.2688 ms 54.5%
+  triton_mm_11395 0.2956 ms 49.6%
+  triton_mm_11391 0.2956 ms 49.6%
+  triton_mm_11394 0.2964 ms 49.4%
+SingleProcess AUTOTUNE benchmarking takes 2.4985 seconds and 0.0000 seconds precompiling
+AUTOTUNE mm(24576x1024, 1024x2048)
+  mm 0.1460 ms 100.0%
+  triton_mm_11417 0.1885 ms 77.4%
+  triton_mm_11418 0.1946 ms 75.0%
+  triton_mm_11416 0.2085 ms 70.0%
+  triton_mm_11412 0.2459 ms 59.4%
+  triton_mm_11411 0.2593 ms 56.3%
+  triton_mm_11415 0.2686 ms 54.4%
+  triton_mm_11410 0.2957 ms 49.4%
+  triton_mm_11414 0.2957 ms 49.4%
+  triton_mm_11413 0.2966 ms 49.2%
+SingleProcess AUTOTUNE benchmarking takes 2.5014 seconds and 0.0000 seconds precompiling
+AUTOTUNE mm(24576x1024, 1024x2048)
+  mm 0.1491 ms 100.0%
+  triton_mm_11550 0.1914 ms 77.9%
+  triton_mm_11551 0.1962 ms 76.0%
+  triton_mm_11549 0.2084 ms 71.5%
+  triton_mm_11545 0.2448 ms 60.9%
+  triton_mm_11544 0.2601 ms 57.3%
+  triton_mm_11548 0.2675 ms 55.7%
+  triton_mm_11547 0.2956 ms 50.4%
+  triton_mm_11543 0.2959 ms 50.4%
+  triton_mm_11546 0.2968 ms 50.2%
+SingleProcess AUTOTUNE benchmarking takes 2.4944 seconds and 0.0000 seconds precompiling
+AUTOTUNE mm(24576x1024, 1024x2048)
+  mm 0.1477 ms 100.0%
+  triton_mm_11816 0.1876 ms 78.8%
+  triton_mm_11817 0.1960 ms 75.4%
+  triton_mm_11815 0.2075 ms 71.2%
+  triton_mm_11811 0.2457 ms 60.1%
+  triton_mm_11810 0.2606 ms 56.7%
+  triton_mm_11814 0.2675 ms 55.2%
+  triton_mm_11809 0.2958 ms 50.0%
+  triton_mm_11813 0.2961 ms 49.9%
+  triton_mm_11808 0.2970 ms 49.7%
+SingleProcess AUTOTUNE benchmarking takes 2.4981 seconds and 0.0000 seconds precompiling
+Step 100, Train Loss: 8.6970, Val Loss: 8.6072, LR: 0.000024, Tokens/s: 443,561
+Step 200, Train Loss: 6.9891, Val Loss: 6.9900, LR: 0.000047, Tokens/s: 491,822
+Step 300, Train Loss: 6.3540, Val Loss: 6.3821, LR: 0.000071, Tokens/s: 918,807
+Step 400, Train Loss: 5.8609, Val Loss: 6.0114, LR: 0.000094, Tokens/s: 935,049
+Step 500, Train Loss: 5.7095, Val Loss: 5.6821, LR: 0.000118, Tokens/s: 934,621
+Step 600, Train Loss: 5.3929, Val Loss: 5.4084, LR: 0.000142, Tokens/s: 934,474
+Step 700, Train Loss: 5.1853, Val Loss: 5.1947, LR: 0.000165, Tokens/s: 924,785
+Step 800, Train Loss: 5.0172, Val Loss: 5.0005, LR: 0.000189, Tokens/s: 917,433
+Step 900, Train Loss: 4.7606, Val Loss: 4.8866, LR: 0.000212, Tokens/s: 934,075
+Step 1000, Train Loss: 4.8456, Val Loss: 4.7251, LR: 0.000236, Tokens/s: 934,818
+Step 1100, Train Loss: 4.5687, Val Loss: 4.5958, LR: 0.000260, Tokens/s: 934,846
+Step 1200, Train Loss: 4.4160, Val Loss: 4.5303, LR: 0.000283, Tokens/s: 924,047
+Step 1300, Train Loss: 4.2935, Val Loss: 4.3574, LR: 0.000300, Tokens/s: 920,502
+Step 1400, Train Loss: 4.2124, Val Loss: 4.2656, LR: 0.000300, Tokens/s: 935,229
+Step 1500, Train Loss: 4.0906, Val Loss: 4.1819, LR: 0.000300, Tokens/s: 934,254
+Step 1600, Train Loss: 3.9495, Val Loss: 4.1165, LR: 0.000299, Tokens/s: 934,747
+Step 1700, Train Loss: 4.0182, Val Loss: 4.0562, LR: 0.000299, Tokens/s: 925,994
+Step 1800, Train Loss: 3.9664, Val Loss: 4.0163, LR: 0.000299, Tokens/s: 916,102
+Step 1900, Train Loss: 3.9068, Val Loss: 3.9703, LR: 0.000298, Tokens/s: 933,965
+Step 2000, Train Loss: 3.9012, Val Loss: 3.9385, LR: 0.000297, Tokens/s: 934,040
+Step 2100, Train Loss: 3.8821, Val Loss: 3.9028, LR: 0.000297, Tokens/s: 934,563
+Step 2200, Train Loss: 3.8439, Val Loss: 3.8707, LR: 0.000296, Tokens/s: 923,962
+Step 2300, Train Loss: 3.7942, Val Loss: 3.8360, LR: 0.000295, Tokens/s: 919,781
+Step 2400, Train Loss: 3.8034, Val Loss: 3.8165, LR: 0.000294, Tokens/s: 933,892
+Step 2500, Train Loss: 3.7510, Val Loss: 3.7888, LR: 0.000292, Tokens/s: 934,252
+Step 2600, Train Loss: 3.6686, Val Loss: 3.7721, LR: 0.000291, Tokens/s: 934,908
+Step 2700, Train Loss: 3.7163, Val Loss: 3.7520, LR: 0.000290, Tokens/s: 924,114
+Step 2800, Train Loss: 3.6908, Val Loss: 3.7398, LR: 0.000288, Tokens/s: 916,749
+Step 2900, Train Loss: 3.6527, Val Loss: 3.7260, LR: 0.000287, Tokens/s: 933,511
+Step 3000, Train Loss: 3.6253, Val Loss: 3.7064, LR: 0.000285, Tokens/s: 933,435
+Step 3100, Train Loss: 3.6293, Val Loss: 3.7012, LR: 0.000283, Tokens/s: 934,166
+Step 3200, Train Loss: 3.7014, Val Loss: 3.8046, LR: 0.000282, Tokens/s: 924,254
+Step 3300, Train Loss: 3.7673, Val Loss: 3.8280, LR: 0.000280, Tokens/s: 923,597
+Step 3400, Train Loss: 3.7914, Val Loss: 3.7077, LR: 0.000278, Tokens/s: 934,991
+Step 3500, Train Loss: 3.7053, Val Loss: 3.6684, LR: 0.000276, Tokens/s: 932,628
+Step 3600, Train Loss: 3.5578, Val Loss: 3.6506, LR: 0.000273, Tokens/s: 934,501
+Step 3700, Train Loss: 3.5170, Val Loss: 3.6304, LR: 0.000271, Tokens/s: 924,207
+Step 3800, Train Loss: 3.5359, Val Loss: 3.6119, LR: 0.000269, Tokens/s: 917,606
+Step 3900, Train Loss: 3.5381, Val Loss: 3.6015, LR: 0.000266, Tokens/s: 934,070
+Step 4000, Train Loss: 3.5277, Val Loss: 3.5940, LR: 0.000264, Tokens/s: 934,089
+Step 4100, Train Loss: 3.5045, Val Loss: 3.5845, LR: 0.000261, Tokens/s: 934,778
+Step 4200, Train Loss: 3.5040, Val Loss: 3.5673, LR: 0.000259, Tokens/s: 925,044
+Step 4300, Train Loss: 3.5258, Val Loss: 3.5554, LR: 0.000256, Tokens/s: 917,761
+Step 4400, Train Loss: 3.5710, Val Loss: 3.5496, LR: 0.000253, Tokens/s: 934,366
+Step 4500, Train Loss: 3.5999, Val Loss: 3.5380, LR: 0.000250, Tokens/s: 933,633
+Step 4600, Train Loss: 3.4703, Val Loss: 3.5228, LR: 0.000247, Tokens/s: 931,757
+Step 4700, Train Loss: 3.5714, Val Loss: 3.5151, LR: 0.000244, Tokens/s: 931,586
+Step 4800, Train Loss: 3.5290, Val Loss: 3.5084, LR: 0.000241, Tokens/s: 917,335
+Step 4900, Train Loss: 3.5173, Val Loss: 3.4955, LR: 0.000238, Tokens/s: 934,744
+Step 5000, Train Loss: 3.5354, Val Loss: 3.4952, LR: 0.000235, Tokens/s: 933,678
+Step 5100, Train Loss: 3.4849, Val Loss: 3.4850, LR: 0.000232, Tokens/s: 928,117
+Step 5200, Train Loss: 3.4334, Val Loss: 3.4799, LR: 0.000229, Tokens/s: 928,102
+Step 5300, Train Loss: 3.4217, Val Loss: 3.4746, LR: 0.000226, Tokens/s: 927,336
+Step 5400, Train Loss: 3.4807, Val Loss: 3.4765, LR: 0.000222, Tokens/s: 934,481
+Step 5500, Train Loss: 3.4684, Val Loss: 3.4693, LR: 0.000219, Tokens/s: 933,648
+Step 5600, Train Loss: 3.4127, Val Loss: 3.4639, LR: 0.000215, Tokens/s: 924,601
+Step 5700, Train Loss: 3.3579, Val Loss: 3.4582, LR: 0.000212, Tokens/s: 921,452
+Step 5800, Train Loss: 3.3649, Val Loss: 3.4575, LR: 0.000208, Tokens/s: 930,794
+Step 5900, Train Loss: 3.4302, Val Loss: 3.4526, LR: 0.000205, Tokens/s: 934,839
+Step 6000, Train Loss: 3.4250, Val Loss: 3.4398, LR: 0.000201, Tokens/s: 933,677
+Step 6100, Train Loss: 3.3855, Val Loss: 3.4410, LR: 0.000198, Tokens/s: 924,243
+Step 6200, Train Loss: 3.3916, Val Loss: 3.4335, LR: 0.000194, Tokens/s: 925,100
+Step 6300, Train Loss: 3.3731, Val Loss: 3.4250, LR: 0.000191, Tokens/s: 930,449
+Step 6400, Train Loss: 3.3441, Val Loss: 3.4222, LR: 0.000187, Tokens/s: 935,439
+Step 6500, Train Loss: 3.4011, Val Loss: 3.4123, LR: 0.000183, Tokens/s: 933,905
+Step 6600, Train Loss: 3.4436, Val Loss: 3.4044, LR: 0.000180, Tokens/s: 924,950
+Step 6700, Train Loss: 3.3995, Val Loss: 3.3993, LR: 0.000176, Tokens/s: 921,817
+Step 6800, Train Loss: 3.3361, Val Loss: 3.3846, LR: 0.000172, Tokens/s: 930,784
+Step 6900, Train Loss: 3.3868, Val Loss: 3.3830, LR: 0.000168, Tokens/s: 934,555
+Step 7000, Train Loss: 3.3745, Val Loss: 3.3748, LR: 0.000165, Tokens/s: 933,692
+Step 7100, Train Loss: 3.3753, Val Loss: 3.3724, LR: 0.000161, Tokens/s: 924,735
+Step 7200, Train Loss: 3.3606, Val Loss: 3.3592, LR: 0.000157, Tokens/s: 921,203
+Step 7300, Train Loss: 3.3438, Val Loss: 3.3523, LR: 0.000154, Tokens/s: 930,401
+Step 7400, Train Loss: 3.3627, Val Loss: 3.3479, LR: 0.000150, Tokens/s: 935,388
+Step 7500, Train Loss: 3.3359, Val Loss: 3.3460, LR: 0.000146, Tokens/s: 934,776
+Step 7600, Train Loss: 3.3272, Val Loss: 3.3425, LR: 0.000143, Tokens/s: 925,580
+Step 7700, Train Loss: 3.3158, Val Loss: 3.3427, LR: 0.000139, Tokens/s: 921,042
+Step 7800, Train Loss: 3.3072, Val Loss: 3.3397, LR: 0.000135, Tokens/s: 929,984
+Step 7900, Train Loss: 3.3318, Val Loss: 3.3375, LR: 0.000132, Tokens/s: 934,568
+Step 8000, Train Loss: 3.2976, Val Loss: 3.3346, LR: 0.000128, Tokens/s: 934,379
+Step 8100, Train Loss: 3.3193, Val Loss: 3.3320, LR: 0.000125, Tokens/s: 925,190
+Step 8200, Train Loss: 3.3184, Val Loss: 3.3285, LR: 0.000121, Tokens/s: 922,147
+Step 8300, Train Loss: 3.3078, Val Loss: 3.3295, LR: 0.000118, Tokens/s: 930,799
+Step 8400, Train Loss: 3.3240, Val Loss: 3.3209, LR: 0.000114, Tokens/s: 935,284
+Step 8500, Train Loss: 3.2807, Val Loss: 3.3173, LR: 0.000111, Tokens/s: 934,007
+Step 8600, Train Loss: 3.2493, Val Loss: 3.3166, LR: 0.000107, Tokens/s: 925,542
+Step 8700, Train Loss: 3.2589, Val Loss: 3.3113, LR: 0.000104, Tokens/s: 921,232
+Step 8800, Train Loss: 3.2560, Val Loss: 3.3076, LR: 0.000101, Tokens/s: 930,617
+Step 8900, Train Loss: 3.2822, Val Loss: 3.3051, LR: 0.000098, Tokens/s: 934,966
+Step 9000, Train Loss: 3.3002, Val Loss: 3.2983, LR: 0.000094, Tokens/s: 933,615
+Step 9100, Train Loss: 3.2999, Val Loss: 3.2957, LR: 0.000091, Tokens/s: 924,645
+Step 9200, Train Loss: 3.2853, Val Loss: 3.2900, LR: 0.000088, Tokens/s: 925,308
+Step 9300, Train Loss: 3.2592, Val Loss: 3.2860, LR: 0.000085, Tokens/s: 930,122
+Step 9400, Train Loss: 3.3603, Val Loss: 3.2834, LR: 0.000082, Tokens/s: 934,871
+Step 9500, Train Loss: 3.2055, Val Loss: 3.2781, LR: 0.000079, Tokens/s: 933,789
+Step 9600, Train Loss: 3.1916, Val Loss: 3.2758, LR: 0.000076, Tokens/s: 925,417
+Step 9700, Train Loss: 3.2607, Val Loss: 3.2707, LR: 0.000074, Tokens/s: 924,835
+Step 9800, Train Loss: 3.2717, Val Loss: 3.2679, LR: 0.000071, Tokens/s: 930,517
+Step 9900, Train Loss: 3.2442, Val Loss: 3.2645, LR: 0.000068, Tokens/s: 934,616
+Step 10000, Train Loss: 3.3255, Val Loss: 3.2593, LR: 0.000066, Tokens/s: 933,373
+Step 10100, Train Loss: 3.2338, Val Loss: 3.2581, LR: 0.000063, Tokens/s: 924,869
+Step 10200, Train Loss: 3.3026, Val Loss: 3.2559, LR: 0.000061, Tokens/s: 924,256
+Step 10300, Train Loss: 3.2449, Val Loss: 3.2525, LR: 0.000059, Tokens/s: 930,808
+Step 10400, Train Loss: 3.2962, Val Loss: 3.2508, LR: 0.000056, Tokens/s: 934,368
+Step 10500, Train Loss: 3.2286, Val Loss: 3.2488, LR: 0.000054, Tokens/s: 927,807
+Step 10600, Train Loss: 3.2516, Val Loss: 3.2472, LR: 0.000052, Tokens/s: 931,631
+Step 10700, Train Loss: 3.2200, Val Loss: 3.2462, LR: 0.000050, Tokens/s: 921,545
+Step 10800, Train Loss: 3.2588, Val Loss: 3.2453, LR: 0.000048, Tokens/s: 930,211
+Step 10900, Train Loss: 3.2292, Val Loss: 3.2444, LR: 0.000046, Tokens/s: 934,839
+Step 11000, Train Loss: 3.1414, Val Loss: 3.2413, LR: 0.000045, Tokens/s: 926,525
+Step 11100, Train Loss: 3.2844, Val Loss: 3.2409, LR: 0.000043, Tokens/s: 925,289
+Step 11200, Train Loss: 3.2276, Val Loss: 3.2391, LR: 0.000042, Tokens/s: 931,430
+Step 11300, Train Loss: 3.1912, Val Loss: 3.2375, LR: 0.000040, Tokens/s: 930,092
+Step 11400, Train Loss: 3.1454, Val Loss: 3.2372, LR: 0.000039, Tokens/s: 935,007
+Step 11500, Train Loss: 3.2836, Val Loss: 3.2354, LR: 0.000037, Tokens/s: 924,476
+Step 11600, Train Loss: 3.2245, Val Loss: 3.2346, LR: 0.000036, Tokens/s: 924,322
+Step 11700, Train Loss: 3.2410, Val Loss: 3.2312, LR: 0.000035, Tokens/s: 934,495
+Step 11800, Train Loss: 3.1718, Val Loss: 3.2312, LR: 0.000034, Tokens/s: 930,904
+Step 11900, Train Loss: 3.1720, Val Loss: 3.2298, LR: 0.000033, Tokens/s: 934,718
+Step 12000, Train Loss: 3.2374, Val Loss: 3.2282, LR: 0.000033, Tokens/s: 923,591
+Step 12100, Train Loss: 3.1446, Val Loss: 3.2273, LR: 0.000032, Tokens/s: 921,256
+Step 12200, Train Loss: 3.1597, Val Loss: 3.2266, LR: 0.000031, Tokens/s: 933,841
+Step 12300, Train Loss: 3.1804, Val Loss: 3.2265, LR: 0.000031, Tokens/s: 930,096
+Step 12400, Train Loss: 3.1944, Val Loss: 3.2253, LR: 0.000031, Tokens/s: 934,629
+Step 12500, Train Loss: 3.1629, Val Loss: 3.2253, LR: 0.000030, Tokens/s: 923,923
+Step 12600, Train Loss: 3.2800, Val Loss: 3.2241, LR: 0.000030, Tokens/s: 921,784
+Step 12700, Train Loss: 3.2278, Val Loss: 3.2223, LR: 0.000030, Tokens/s: 934,857
+Model saved
