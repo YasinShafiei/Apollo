@@ -6,13 +6,9 @@ import time
 import torch 
 import torch.nn.functional as F
 import torch.distributed as dist
-import torch._inductor.config
 from torch.amp import autocast
 from torch.utils.data import DataLoader
 from torch.nn.parallel import DistributedDataParallel as DDP
-
-# keep Triton autotuning but disable CUDA graphs (incompatible with DDP hooks)
-torch._inductor.config.triton.cudagraphs = False
 
 from model import Model
 from data import FineWebDataset
@@ -185,7 +181,7 @@ def main():
     # model on specific GPU with BF16
     model = Model(model_cfg.vocab_size, model_cfg.embed_dim, model_cfg.n_layers, model_cfg.n_heads, model_cfg.n_kv_heads, model_cfg.hidden_dim, model_cfg.max_seq_len).to(local_rank)
     model.device = local_rank
-    model = torch.compile(model, mode="max-autotune")
+    model = torch.compile(model, mode="max-autotune-no-cudagraphs")
 
     # print total number of parameters
     if is_main_process():
