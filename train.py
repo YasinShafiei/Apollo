@@ -6,9 +6,13 @@ import time
 import torch 
 import torch.nn.functional as F
 import torch.distributed as dist
+import torch._inductor.config
 from torch.amp import autocast
 from torch.utils.data import DataLoader
 from torch.nn.parallel import DistributedDataParallel as DDP
+
+# keep Triton autotuning but disable CUDA graphs (incompatible with DDP hooks)
+torch._inductor.config.triton.cudagraphs = False
 
 from model import Model
 from data import FineWebDataset
