@@ -2,6 +2,7 @@ import os
 import sys
 import math
 import time
+from contextlib import nullcontext
 
 import torch 
 import torch.nn.functional as F
@@ -54,25 +55,19 @@ def train(model, optimizer, train_loader, val_loader, local_rank, world_size, mo
                 train_iter = iter(train_loader)
                 input, target = next(train_iter)
             
-            input = input.to(local_rank)
-            target = target.to(local_rank)
+            input = input.to(local_rank, non_blocking=True)
+            target = target.to(local_rank, non_blocking=True)
             
-            # always disable DDP gradient sync during backward to keep
-            # the backward graph structure consistent for CUDA graphs
-            # (NCCL allreduce is not capturable by CUDA graphs)
-            with model.no_sync():
+            # only suppress DDP gradient sync on non-final micro-steps;
+            # let DDP overlap allreduce with the last backward pass
+            ctx = model.no_sync() if micro_step < train_cfg.accum_steps - 1 else nullcontext()
+            with ctx:
                 with autocast(device_type='cuda', dtype=torch.bfloat16):
                     out, loss = model(input, target)
                 scaled_loss = loss / train_cfg.accum_steps
                 scaled_loss.backward()
             
             accum_loss += loss.item()
-
-        # manually synchronize gradients across all ranks after
-        # accumulation, outside the compiled backward graph
-        for param in model.parameters():
-            if param.grad is not None:
-                dist.all_reduce(param.grad, op=dist.ReduceOp.AVG)
         
         # average loss over accumulation steps
         avg_loss = accum_loss / train_cfg.accum_steps
@@ -122,7 +117,7 @@ def train(model, optimizer, train_loader, val_loader, local_rank, world_size, mo
             print(f"first step completed, loss: {avg_loss:.4f}", flush=True)
 
         if step % 100 == 0:
-            val_loss = validate(model, val_loader, val_steps=50, local_rank=local_rank, sft=False)
+            val_loss = validate(model, val_loader, local_rank, val_steps=50, sft=False)
             if is_main_process():
                 current_time = time.time()
                 elapsed = current_time - last_log_time
@@ -175,8 +170,8 @@ def main():
         shuffle=False,
     )
 
-    train_loader = DataLoader(train_dataset, batch_size=train_cfg.micro_batch_size, num_workers=4, pin_memory=True)
-    val_loader   = DataLoader(val_dataset, batch_size=train_cfg.micro_batch_size, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=train_cfg.micro_batch_size, num_workers=8, pin_memory=True)
+    val_loader   = DataLoader(val_dataset, batch_size=train_cfg.micro_batch_size, num_workers=8, pin_memory=True)
     
     # model on specific GPU with BF16
     model = Model(model_cfg.vocab_size, model_cfg.embed_dim, model_cfg.n_layers, model_cfg.n_heads, model_cfg.n_kv_heads, model_cfg.hidden_dim, model_cfg.max_seq_len).to(local_rank)

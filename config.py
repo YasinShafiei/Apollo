@@ -3,7 +3,7 @@ from dataclasses import dataclass
 @dataclass
 class ModelConfig:
     # 367m config 
-    vocab_size = 100277
+    vocab_size = 100288 
     embed_dim = 1024
     n_layers = 28
     n_heads = 16
@@ -14,8 +14,8 @@ class ModelConfig:
 
 @dataclass
 class TrainConfig:
-    micro_batch_size = 24
-    accum_steps = 12
+    micro_batch_size = 48
+    accum_steps = 6
     lr = 3e-4
     min_lr = 3e-5
     token_budget = 30_000_000_000
@@ -40,4 +40,3 @@ class Paths:
     pretrain_val_manifest_path = "data/fineweb_edu_val.jsonl"
     sft_path = "apollo_sft.pt"
     sft_data_path = "alpaca.json"
-

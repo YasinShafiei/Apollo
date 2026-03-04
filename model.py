@@ -3,6 +3,7 @@ import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F 
+from torch.utils.checkpoint import checkpoint
 
 class RotaryEmbedding(nn.Module):
     def __init__(self, dim, max_seq_len, base=10_000):
@@ -181,26 +182,43 @@ class Model(nn.Module):
         # embedding
         out = self.tok_emb(idx)
         
-        # transformer blocks
+        # transformer blocks (with gradient checkpointing)
         for layer in self.layers:
-            out = layer(out, self.rope)
+            out = checkpoint(layer, out, self.rope, use_reentrant=False)
 
         # logits 
         out = self.rms_norm(out)
-        logits = self.f_head(out) # (B, T, vocab_size)
 
         # loss calculation
         loss = None
         if targets is not None:
-            B, T, C = logits.shape
-            logits = logits.float()
-            loss = F.cross_entropy(logits.view(B * T, C), targets.view(B*T))
+            # chunked cross-entropy: never materialize full logits
+            loss = self._chunked_cross_entropy(out, targets, chunk_size=512)
+            return None, loss
+
+        logits = self.f_head(out) # (B, T, vocab_size)
         
         return logits, loss
 
+    def _chunked_cross_entropy(self, hidden, targets, chunk_size=512):
+        B, T, C = hidden.shape
+        total_loss = 0.0
+        num_chunks = (T + chunk_size - 1) // chunk_size
+        for i in range(num_chunks):
+            s = i * chunk_size
+            e = min(s + chunk_size, T)
+            logits_chunk = self.f_head(hidden[:, s:e, :]).float()
+            targets_chunk = targets[:, s:e]
+            total_loss += F.cross_entropy(
+                logits_chunk.reshape(-1, logits_chunk.size(-1)),
+                targets_chunk.reshape(-1),
+                reduction='sum'
+            )
+        return total_loss / (B * T)
+
 if __name__ == "__main__":
     # Simple test parameters
-    vocab_size = 100277
+    vocab_size = 100288
     embed_dim = 768  # Must be divisible by n_heads
     n_layers = 16
     n_heads = 12
@@ -221,6 +239,5 @@ if __name__ == "__main__":
     print(f"Logits shape: {logits.shape}")
     
     # Forward pass with targets (loss + logits)
-    logits, loss = model(x, targets)
+    _, loss = model(x, targets)
     print(f"Loss: {loss.item():.4f}")
-
