@@ -31,8 +31,8 @@ def masked_loss(logits, targets, loss_mask):
 
 
 def validate(model, val_loader, local_rank, val_steps=20, sft=False):
-    model.eval() 
-    val_loss = 0.0 
+    model.eval()
+    val_loss = 0.0
     val_iter = iter(val_loader)
 
     with torch.no_grad():
@@ -44,25 +44,21 @@ def validate(model, val_loader, local_rank, val_steps=20, sft=False):
                 batch = next(val_iter)
 
             if sft:
-                input_ids, target_ids, loss_mask = batch 
-                input_ids = input_ids.to(local_rank)
-                target_ids = target_ids.to(local_rank)
-                loss_mask = loss_mask.to(local_rank)
+                input_ids, target_ids, loss_mask = batch
+                input_ids  = input_ids.to(local_rank, non_blocking=True)
+                target_ids = target_ids.to(local_rank, non_blocking=True)
+                loss_mask  = loss_mask.to(local_rank, non_blocking=True)
 
                 with autocast(device_type='cuda', dtype=torch.bfloat16):
-                    logits, _ = model(input_ids)
-                loss = masked_loss(logits, target_ids, loss_mask)
+                    _, loss = model(input_ids, target_ids, loss_mask=loss_mask)
                 val_loss += loss.item()
-            
             else:
                 input_ids, target_ids = batch
-                input_ids = input_ids.to(local_rank)
-                target_ids = target_ids.to(local_rank)
+                input_ids  = input_ids.to(local_rank, non_blocking=True)
+                target_ids = target_ids.to(local_rank, non_blocking=True)
 
                 with autocast(device_type='cuda', dtype=torch.bfloat16):
-                    logits, _ = model(input_ids)
-                
-                loss = F.cross_entropy(logits.float().view(-1, logits.size(-1)), target_ids.view(-1))
+                    _, loss = model(input_ids, target_ids)
                 val_loss += loss.item()
 
     return val_loss / val_steps

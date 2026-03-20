@@ -26,17 +26,43 @@ class TrainConfig:
 @dataclass
 class SFTConfig:
     micro_batch_size = 8
-    accum_steps = 4 
+    accum_steps = 4
     num_epochs = 3
-    lr = 2e-3 
+    lr = 2e-3
     min_lr = 2e-6
     warmup_ratio = 0.1
     mask_prompt = True
 
 @dataclass
+class PostTrainConfig:
+    # Phase 1: Mid-training (continued pretraining on high-quality data)
+    mid_micro_batch_size = 48
+    mid_accum_steps = 6
+    mid_lr = 1e-4
+    mid_min_lr = 1e-5
+    mid_token_budget = 2_000_000_000   
+    mid_warmup_ratio = 0.05
+    mid_weight_decay = 0.1
+
+    # Phase 2: SFT (supervised fine-tuning on conversations)
+    sft_micro_batch_size = 16
+    sft_accum_steps = 2
+    sft_lr = 5e-5
+    sft_min_lr = 5e-6
+    sft_token_budget = 200_000_000    
+    sft_warmup_ratio = 0.05
+    sft_weight_decay = 0.01
+
+    # Shared
+    max_grad_norm = 1.0
+
+@dataclass
 class Paths:
     pretrained_path = "models/apollo_pretrained.pt"
+    midtrained_path = "models/apollo_midtrained.pt"
+    sft_path = "models/apollo_sft.pt"
     pretrain_train_manifest_path = "data/fineweb_edu_train.jsonl"
     pretrain_val_manifest_path = "data/fineweb_edu_val.jsonl"
-    sft_path = "apollo_sft.pt"
-    sft_data_path = "alpaca.json"
+    sft_data_dir = "data/sft"
+    sft_train_path = "data/sft/sft_train.jsonl"
+    sft_val_path = "data/sft/sft_val.jsonl"

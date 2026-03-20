@@ -177,44 +177,58 @@ class Model(nn.Module):
         # final head 
         self.f_head = nn.Linear(embed_dim, vocab_size)
 
-    def forward(self, idx, targets=None):
+    def forward(self, idx, targets=None, loss_mask=None):
 
         # embedding
         out = self.tok_emb(idx)
-        
+
         # transformer blocks (with gradient checkpointing)
         for layer in self.layers:
             out = checkpoint(layer, out, self.rope, use_reentrant=False)
 
-        # logits 
+        # logits
         out = self.rms_norm(out)
 
         # loss calculation
         loss = None
         if targets is not None:
             # chunked cross-entropy: never materialize full logits
-            loss = self._chunked_cross_entropy(out, targets, chunk_size=512)
+            loss = self._chunked_cross_entropy(out, targets, loss_mask=loss_mask, chunk_size=512)
             return None, loss
 
         logits = self.f_head(out) # (B, T, vocab_size)
-        
+
         return logits, loss
 
-    def _chunked_cross_entropy(self, hidden, targets, chunk_size=512):
+    def _chunked_cross_entropy(self, hidden, targets, loss_mask=None, chunk_size=512):
         B, T, C = hidden.shape
         total_loss = 0.0
+        total_count = 0.0
         num_chunks = (T + chunk_size - 1) // chunk_size
         for i in range(num_chunks):
             s = i * chunk_size
             e = min(s + chunk_size, T)
             logits_chunk = self.f_head(hidden[:, s:e, :]).float()
             targets_chunk = targets[:, s:e]
-            total_loss += F.cross_entropy(
-                logits_chunk.reshape(-1, logits_chunk.size(-1)),
-                targets_chunk.reshape(-1),
-                reduction='sum'
-            )
-        return total_loss / (B * T)
+
+            if loss_mask is not None:
+                mask_chunk = loss_mask[:, s:e]
+                per_token = F.cross_entropy(
+                    logits_chunk.reshape(-1, logits_chunk.size(-1)),
+                    targets_chunk.reshape(-1),
+                    reduction='none'
+                ).view(B, -1)
+                total_loss += (per_token * mask_chunk).sum()
+                total_count += mask_chunk.sum()
+            else:
+                total_loss += F.cross_entropy(
+                    logits_chunk.reshape(-1, logits_chunk.size(-1)),
+                    targets_chunk.reshape(-1),
+                    reduction='sum'
+                )
+                total_count += B * (e - s)
+
+        return total_loss / (total_count + 1e-8)
 
 if __name__ == "__main__":
     # Simple test parameters
