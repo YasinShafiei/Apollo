@@ -24,6 +24,7 @@ def train_loop(
     total_steps, warmup_steps,
     lr, min_lr, max_grad_norm, accum_steps,
     tokens_per_step, phase_name, sft=False,
+    step_offset=0,
 ):
     """
     Unified training loop for both mid-training and SFT.
@@ -110,7 +111,7 @@ def train_loop(
                 f"{phase_name}/total_tokens": total_tokens,
                 f"{phase_name}/grad_norm": grad_norm,
                 f"{phase_name}/progress_pct": (step / total_steps) * 100,
-            }, step=step)
+            }, step=step_offset + step)
 
         if step == 1 and is_main_process():
             print(f"[{phase_name}] first step done, loss: {avg_loss:.4f}", flush=True)
@@ -134,7 +135,7 @@ def train_loop(
                     f"{phase_name}/val_perplexity": val_ppl,
                 }
                 log_dict.update(get_all_gpu_stats(world_size))
-                wandb.log(log_dict, step=step)
+                wandb.log(log_dict, step=step_offset + step)
 
             model.train()
 
@@ -163,6 +164,7 @@ def main():
     )
     if os.path.exists(paths.pretrained_path):
         state = torch.load(paths.pretrained_path, map_location="cpu", weights_only=True)
+        state = {k.replace("_orig_mod.", ""): v for k, v in state.items()}
         model.load_state_dict(state)
         if is_main_process():
             print(f"Loaded pretrained weights from {paths.pretrained_path}")
@@ -172,6 +174,7 @@ def main():
 
     model = model.to(local_rank)
     model.device = local_rank
+    torch._dynamo.config.optimize_ddp = False
     model = torch.compile(model, mode="max-autotune-no-cudagraphs")
 
     if is_main_process():
@@ -202,55 +205,64 @@ def main():
     dist.barrier()
 
 
-    if is_main_process():
-        print("\n" + "=" * 60)
-        print("  PHASE 1: Mid-Training (FineWeb-EDU)")
-        print("=" * 60)
-
-    mid_train_dataset = FineWebDataset(
-        manifest_path=paths.pretrain_train_manifest_path,
-        max_seq_len=model_cfg.max_seq_len, seed=42, shuffle=True,
-    )
-    mid_val_dataset = FineWebDataset(
-        manifest_path=paths.pretrain_val_manifest_path,
-        max_seq_len=model_cfg.max_seq_len, seed=42, shuffle=False,
-    )
-    mid_train_loader = DataLoader(
-        mid_train_dataset, batch_size=pt_cfg.mid_micro_batch_size,
-        num_workers=8, pin_memory=True,
-    )
-    mid_val_loader = DataLoader(
-        mid_val_dataset, batch_size=pt_cfg.mid_micro_batch_size,
-        num_workers=8, pin_memory=True,
-    )
-
     mid_eff_batch   = pt_cfg.mid_micro_batch_size * pt_cfg.mid_accum_steps * world_size
     mid_tok_per_step = mid_eff_batch * model_cfg.max_seq_len
     mid_total_steps = pt_cfg.mid_token_budget // mid_tok_per_step
-    mid_warmup      = int(pt_cfg.mid_warmup_ratio * mid_total_steps)
 
-    mid_optimizer = torch.optim.AdamW(
-        model.parameters(), lr=pt_cfg.mid_lr,
-        weight_decay=pt_cfg.mid_weight_decay, fused=True,
-    )
+    if os.path.exists(paths.midtrained_path):
+        state = torch.load(paths.midtrained_path, map_location="cpu", weights_only=True)
+        state = {k.replace("_orig_mod.", ""): v for k, v in state.items()}
+        model.module._orig_mod.load_state_dict(state)
+        if is_main_process():
+            print(f"Loaded mid-trained model from {paths.midtrained_path}, skipping mid-training")
+        dist.barrier()
+    else:
+        if is_main_process():
+            print("\n" + "=" * 60)
+            print("  PHASE 1: Mid-Training (FineWeb-EDU)")
+            print("=" * 60)
 
-    train_loop(
-        model, mid_optimizer, mid_train_loader, mid_val_loader,
-        local_rank, world_size,
-        total_steps=mid_total_steps, warmup_steps=mid_warmup,
-        lr=pt_cfg.mid_lr, min_lr=pt_cfg.mid_min_lr,
-        max_grad_norm=pt_cfg.max_grad_norm,
-        accum_steps=pt_cfg.mid_accum_steps,
-        tokens_per_step=mid_tok_per_step,
-        phase_name="mid", sft=False,
-    )
+        mid_train_dataset = FineWebDataset(
+            manifest_path=paths.pretrain_train_manifest_path,
+            max_seq_len=model_cfg.max_seq_len, seed=42, shuffle=True,
+        )
+        mid_val_dataset = FineWebDataset(
+            manifest_path=paths.pretrain_val_manifest_path,
+            max_seq_len=model_cfg.max_seq_len, seed=42, shuffle=False,
+        )
+        mid_train_loader = DataLoader(
+            mid_train_dataset, batch_size=pt_cfg.mid_micro_batch_size,
+            num_workers=8, pin_memory=True,
+        )
+        mid_val_loader = DataLoader(
+            mid_val_dataset, batch_size=pt_cfg.mid_micro_batch_size,
+            num_workers=8, pin_memory=True,
+        )
 
-    if is_main_process():
-        os.makedirs(os.path.dirname(paths.midtrained_path), exist_ok=True)
-        torch.save(model.module.state_dict(), paths.midtrained_path)
-        print(f"Mid-trained model saved to {paths.midtrained_path}")
+        mid_warmup = int(pt_cfg.mid_warmup_ratio * mid_total_steps)
 
-    dist.barrier()
+        mid_optimizer = torch.optim.AdamW(
+            model.parameters(), lr=pt_cfg.mid_lr,
+            weight_decay=pt_cfg.mid_weight_decay, fused=True,
+        )
+
+        train_loop(
+            model, mid_optimizer, mid_train_loader, mid_val_loader,
+            local_rank, world_size,
+            total_steps=mid_total_steps, warmup_steps=mid_warmup,
+            lr=pt_cfg.mid_lr, min_lr=pt_cfg.mid_min_lr,
+            max_grad_norm=pt_cfg.max_grad_norm,
+            accum_steps=pt_cfg.mid_accum_steps,
+            tokens_per_step=mid_tok_per_step,
+            phase_name="mid", sft=False,
+        )
+
+        if is_main_process():
+            os.makedirs(os.path.dirname(paths.midtrained_path), exist_ok=True)
+            torch.save(model.module.state_dict(), paths.midtrained_path)
+            print(f"Mid-trained model saved to {paths.midtrained_path}")
+
+        dist.barrier()
 
 
     if is_main_process():
@@ -299,6 +311,7 @@ def main():
         accum_steps=pt_cfg.sft_accum_steps,
         tokens_per_step=sft_tok_per_step,
         phase_name="sft", sft=True,
+        step_offset=mid_total_steps,
     )
 
     # save final SFT model

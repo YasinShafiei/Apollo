@@ -142,8 +142,8 @@ class SFTMixtureDataset(IterableDataset):
             content = msg["content"]
 
             # <|im_start|>role\ncontent<|im_end|>
-            role_tokens = self.enc.encode(role + "\n")
-            content_tokens = self.enc.encode(content)
+            role_tokens = self.enc.encode(role + "\n", disallowed_special=())
+            content_tokens = self.enc.encode(content, disallowed_special=())
 
             msg_tokens = [IM_START] + role_tokens + content_tokens + [IM_END]
 
